@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.effect.*?>
+<?import java.lang.*?>
+<?import javafx.scene.canvas.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.collections.*?>
+<?import javafx.geometry.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<BorderPane prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.pixelcraft.MainController">
+  <top>
+    <VBox>
+      <children>
+        <MenuBar>
+          <menus>
+            <Menu text="File">
+              <items>
+                <MenuItem id="miNew" onAction="#onNewImage" text="New">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-file" iconSize="16"/>
+                  </graphic>
+                </MenuItem>
+                <MenuItem id="miOpen" onAction="#onOpenImage" text="Open...">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-folder-open" iconSize="16"/>
+                  </graphic>
+                </MenuItem>                
+                <Menu fx:id="mnuRecents" onAction="#onRecents" text="Recents">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-history" iconSize="16"/>
+                  </graphic>
+                  <items>
+                    <MenuItem onAction="#onGenericClick" text="No recent files"/>
+                  </items>
+                </Menu>
+                <SeparatorMenuItem/>
+                <MenuItem id="miSave" onAction="#onSaveImage" text="Save">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-save" iconSize="16"/>
+                  </graphic>
+                </MenuItem>
+                <MenuItem id="miSaveAs" onAction="#onSaveAsImage" text="Save As...">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-file-export" iconSize="16"/>
+                  </graphic>
+                </MenuItem>
+                <SeparatorMenuItem/>
+                <MenuItem id="miExit" onAction="#onExit" text="Exit">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-sign-out-alt" iconSize="16"/>
+                  </graphic>
+                </MenuItem>
+              </items>
+            </Menu>
+            <Menu text="Edit">
+              <items>
+                <MenuItem onAction="#onGenericClick" text="Undo">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-undo" iconSize="16"/>
+                  </graphic>
+                </MenuItem>
+                <MenuItem onAction="#onGenericClick" text="Redo">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-redo" iconSize="16"/>
+                  </graphic>
+                </MenuItem>
+                <MenuItem onAction="#onGenericClick" text="Cut">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-cut" iconSize="16"/>
+                  </graphic>
+                </MenuItem>
+                <MenuItem onAction="#onGenericClick" text="Copy">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-copy" iconSize="16"/>
+                  </graphic>
+                </MenuItem>
+                <MenuItem onAction="#onGenericClick" text="Paste">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-paste" iconSize="16"/>
+                  </graphic>
+                </MenuItem>
+              </items>
+            </Menu>
+            <Menu text="View">
+              <items>
+                <MenuItem onAction="#onZoomReset" text="100%">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-window-restore" iconSize="16"/>
+                  </graphic>
+                </MenuItem>
+                <MenuItem onAction="#onZoomIn" text="Zoom In">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-search-plus" iconSize="16"/>
+                  </graphic>
+                </MenuItem>
+                <MenuItem onAction="#onZoomOut" text="Zoom Out">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-search-minus" iconSize="16"/>
+                  </graphic>
+                </MenuItem>
+                <MenuItem onAction="#onZoomFitWindow" text="Fit to Window">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-square-full" iconSize="16"/>
+                  </graphic>
+                </MenuItem>
+              </items>
+            </Menu>
+            <Menu text="Image">
+              <items>
+                <MenuItem onAction="#onGenericClick" text="Rotate"/>
+                <MenuItem onAction="#onGenericClick" text="Flip"/>
+                <MenuItem onAction="#onGenericClick" text="Crop"/>
+                <MenuItem onAction="#onGenericClick" text="Resize"/>
+                <MenuItem onAction="#onGenericClick" text="Skew"/>
+              </items>
+            </Menu>
+            <Menu text="Filters">
+              <items>
+                <MenuItem onAction="#onGenericClick" text="Blur"/>
+                <MenuItem onAction="#onGenericClick" text="Sharpen"/>
+                <MenuItem onAction="#onGenericClick" text="Grayscale"/>
+                <MenuItem onAction="#onGenericClick" text="Invert"/>
+              </items>
+            </Menu>
+            <Menu text="Help">
+              <items>
+                <MenuItem onAction="#onGenericClick" text="About">
+                  <graphic>
+                    <FontIcon iconLiteral="fas-info-circle" iconSize="16"/>
+                  </graphic>
+                </MenuItem>
+              </items>
+            </Menu>
+          </menus>
+        </MenuBar>
+      </children>
+    </VBox>
+  </top>
+
+  <center>
+    <SplitPane dividerPositions="0.2" BorderPane.alignment="CENTER">
+      <items>
+        <ScrollPane fitToHeight="true" fitToWidth="true">
+          <content>
+            <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #505050ff;">
+              <children>
+                <Label style="-fx-font-weight: 700;" text="Tools" textFill="WHITE"/>
+                <Button id="btnSelect" onAction="#onGenericClick" prefHeight="25.0" prefWidth="218.0" text="Select"/>
+                <Button id="btnBrush" onAction="#onGenericClick" prefHeight="25.0" prefWidth="227.0" text="Brush"/>
+                <Button id="btnEraser" onAction="#onGenericClick" prefHeight="25.0" prefWidth="223.0" text="Eraser"/>
+                <Button id="btnFill" onAction="#onGenericClick" prefHeight="25.0" prefWidth="222.0" text="Fill"/>
+                <Button id="btnColorPicker" onAction="#onGenericClick" prefHeight="25.0" prefWidth="229.0" text="Color Picker"/>
+              </children>
+            </VBox>
+          </content>
+        </ScrollPane>
+        <StackPane>
+          <children>
+            <ScrollPane fitToHeight="true" fitToWidth="true">
+              <content>
+                <Pane fx:id="canvasPane" prefHeight="600.0" prefWidth="800.0" style="-fx-background-color: #ddd; -fx-border-color: #bbb;">
+                  <!-- A Canvas node will be created/managed by the controller at runtime -->
+                </Pane>
+              </content>
+            </ScrollPane>
+          </children>
+        </StackPane>
+      </items>
+    </SplitPane>
+  </center>
+
+  <bottom>
+    <HBox alignment="CENTER_LEFT" spacing="2.0" BorderPane.alignment="CENTER_LEFT">
+      <children>
+        <Label text="Image: 800 x 600">
+          <HBox.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+          </HBox.margin>
+        </Label>
+        <Separator orientation="VERTICAL"/>
+        <Label text="Zoom: 100%">
+          <HBox.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+          </HBox.margin>
+        </Label>
+        <Separator orientation="VERTICAL"/>
+        <Label text="Pos: (0, 0)">
+          <HBox.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+          </HBox.margin>
+        </Label>
+        <Separator orientation="VERTICAL"/>
+        <Label text="Mode: Drawing">
+          <HBox.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+          </HBox.margin>
+        </Label>
+        <Separator orientation="VERTICAL"/>
+      </children>
+      <opaqueInsets>
+        <Insets/>
+      </opaqueInsets>
+      <padding>
+        <Insets top="5.0"/>
+      </padding>
+    </HBox>
+  </bottom>
+</BorderPane>
