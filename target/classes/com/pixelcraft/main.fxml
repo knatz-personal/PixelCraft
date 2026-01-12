@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.text.*?>
 <?import javafx.scene.effect.*?>
 <?import java.lang.*?>
 <?import javafx.scene.canvas.*?>
@@ -9,9 +10,8 @@
 <?import javafx.scene.shape.*?>
 <?import javafx.collections.*?>
 <?import javafx.geometry.*?>
-<?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<BorderPane prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.pixelcraft.MainController">
+<BorderPane prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.pixelcraft.ui.MainController">
   <top>
     <VBox>
       <children>
@@ -19,194 +19,193 @@
           <menus>
             <Menu text="File">
               <items>
-                <MenuItem id="miNew" onAction="#onNewImage" text="New">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-file" iconSize="16"/>
-                  </graphic>
-                </MenuItem>
-                <MenuItem id="miOpen" onAction="#onOpenImage" text="Open...">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-folder-open" iconSize="16"/>
-                  </graphic>
-                </MenuItem>                
+                <MenuItem id="miNew" accelerator="Ctrl+N" onAction="#onNewImage" text="New" />
+                <MenuItem id="miOpen" accelerator="Ctrl+O" onAction="#onOpenImage" text="Open..." />
+                <MenuItem id="miSave" accelerator="Ctrl+S" onAction="#onSaveImage" text="Save" />
+                <MenuItem id="miSaveAs" accelerator="Ctrl+Shift+S" onAction="#onSaveAsImage" text="Save As..." />
+                <SeparatorMenuItem />
                 <Menu fx:id="mnuRecents" onAction="#onRecents" text="Recents">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-history" iconSize="16"/>
-                  </graphic>
                   <items>
-                    <MenuItem onAction="#onGenericClick" text="No recent files"/>
+                    <MenuItem onAction="#onGenericClick" text="No recent files" />
                   </items>
                 </Menu>
-                <SeparatorMenuItem/>
-                <MenuItem id="miSave" onAction="#onSaveImage" text="Save">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-save" iconSize="16"/>
-                  </graphic>
-                </MenuItem>
-                <MenuItem id="miSaveAs" onAction="#onSaveAsImage" text="Save As...">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-file-export" iconSize="16"/>
-                  </graphic>
-                </MenuItem>
-                <SeparatorMenuItem/>
-                <MenuItem id="miExit" onAction="#onExit" text="Exit">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-sign-out-alt" iconSize="16"/>
-                  </graphic>
-                </MenuItem>
+                <SeparatorMenuItem />
+                <MenuItem id="miExit" onAction="#onExit" text="Exit" />
               </items>
             </Menu>
             <Menu text="Edit">
               <items>
-                <MenuItem onAction="#onGenericClick" text="Undo">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-undo" iconSize="16"/>
-                  </graphic>
-                </MenuItem>
-                <MenuItem onAction="#onGenericClick" text="Redo">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-redo" iconSize="16"/>
-                  </graphic>
-                </MenuItem>
-                <MenuItem onAction="#onGenericClick" text="Cut">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-cut" iconSize="16"/>
-                  </graphic>
-                </MenuItem>
-                <MenuItem onAction="#onGenericClick" text="Copy">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-copy" iconSize="16"/>
-                  </graphic>
-                </MenuItem>
-                <MenuItem onAction="#onGenericClick" text="Paste">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-paste" iconSize="16"/>
-                  </graphic>
-                </MenuItem>
+                <MenuItem fx:id="miUndo" accelerator="Ctrl+Z" onAction="#onUndo" text="Undo" />
+                <MenuItem fx:id="miRedo" accelerator="Ctrl+Y" onAction="#onRedo" text="Redo" />
+                <SeparatorMenuItem />
+                <MenuItem accelerator="Ctrl+X" onAction="#onGenericClick" text="Cut" />
+                <MenuItem accelerator="Ctrl+C" onAction="#onGenericClick" text="Copy" />
+                <MenuItem accelerator="Ctrl+V" onAction="#onGenericClick" text="Paste" />
+                <MenuItem accelerator="Ctrl+A" onAction="#onGenericClick" text="Select All" />
               </items>
             </Menu>
             <Menu text="View">
               <items>
-                <MenuItem onAction="#onZoomReset" text="100%">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-window-restore" iconSize="16"/>
-                  </graphic>
-                </MenuItem>
-                <MenuItem onAction="#onZoomIn" text="Zoom In">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-search-plus" iconSize="16"/>
-                  </graphic>
-                </MenuItem>
-                <MenuItem onAction="#onZoomOut" text="Zoom Out">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-search-minus" iconSize="16"/>
-                  </graphic>
-                </MenuItem>
-                <MenuItem onAction="#onZoomFitWindow" text="Fit to Window">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-square-full" iconSize="16"/>
-                  </graphic>
-                </MenuItem>
+                <MenuItem fx:id="miZoomReset" accelerator="Ctrl+0" onAction="#onZoomReset" text="Actual (100%)" />
+                <MenuItem fx:id="miZoomIn" accelerator="Ctrl+Plus" onAction="#onZoomIn" text="Zoom In" />
+                <MenuItem fx:id="miZoomOut" accelerator="Ctrl+Minus" onAction="#onZoomOut" text="Zoom Out" />
+                <MenuItem fx:id="miZoomFit" accelerator="Ctrl+F" onAction="#onZoomFitWindow" text="Zoom to Fit" />
               </items>
             </Menu>
             <Menu text="Image">
               <items>
-                <MenuItem onAction="#onGenericClick" text="Rotate"/>
-                <MenuItem onAction="#onGenericClick" text="Flip"/>
-                <MenuItem onAction="#onGenericClick" text="Crop"/>
-                <MenuItem onAction="#onGenericClick" text="Resize"/>
-                <MenuItem onAction="#onGenericClick" text="Skew"/>
+                <MenuItem onAction="#onGenericClick" text="Rotate" />
+                <MenuItem onAction="#onGenericClick" text="Flip" />
+                <MenuItem onAction="#onGenericClick" text="Crop" />
+                <MenuItem onAction="#onGenericClick" text="Resize" />
+                <MenuItem onAction="#onGenericClick" text="Skew" />
               </items>
             </Menu>
             <Menu text="Filters">
               <items>
-                <MenuItem onAction="#onGenericClick" text="Blur"/>
-                <MenuItem onAction="#onGenericClick" text="Sharpen"/>
-                <MenuItem onAction="#onGenericClick" text="Grayscale"/>
-                <MenuItem onAction="#onGenericClick" text="Invert"/>
+                <MenuItem onAction="#onGenericClick" text="Blur" />
+                <MenuItem onAction="#onGenericClick" text="Sharpen" />
+                <MenuItem onAction="#onGenericClick" text="Grayscale" />
+                <MenuItem onAction="#onGenericClick" text="Invert" />
               </items>
             </Menu>
             <Menu text="Help">
               <items>
-                <MenuItem onAction="#onGenericClick" text="About">
-                  <graphic>
-                    <FontIcon iconLiteral="fas-info-circle" iconSize="16"/>
-                  </graphic>
-                </MenuItem>
+                <MenuItem onAction="#onGenericClick" text="About" />
               </items>
             </Menu>
           </menus>
         </MenuBar>
+        <!--
+        <ToolBar>
+          <HBox spacing="6.0">
+            <Button text="-"/>
+            <Button text="-"/>
+            <Button text="-"/>
+            <Button text="-"/>
+            <Button text="-"/>
+          </HBox>
+          <Separator orientation="VERTICAL"/>
+          <HBox spacing="6.0">
+            <ToggleButton text="a"/>
+            <ToggleButton text="a"/>
+            <ToggleButton text="a"/>
+            <ToggleButton text="a"/>
+            <ToggleButton text="a"/>
+            <ToggleButton text="a/>
+            <ToggleButton text="a"/>
+            <ToggleButton text="a"/>
+            <ToggleButton text="a"/>
+          </HBox>
+          <Region HBox.hgrow="ALWAYS"/>
+          <HBox spacing="8.0" alignment="CENTER_RIGHT">
+            <Label text="B C S H"/>
+            <Separator orientation="VERTICAL"/>
+            <Button text=""/>
+            <Button text=""/>
+            <Label text="100%"/>
+            <Button text="Fit"/>
+          </HBox>
+        </ToolBar>
+        -->
       </children>
     </VBox>
   </top>
 
   <center>
-    <SplitPane dividerPositions="0.2" BorderPane.alignment="CENTER">
+    <SplitPane dividerPositions="0.2, 0.8" BorderPane.alignment="CENTER">
       <items>
-        <ScrollPane fitToHeight="true" fitToWidth="true">
+        <ScrollPane fitToHeight="true" fitToWidth="true" maxWidth="220.0" minWidth="220.0">
           <content>
-            <VBox spacing="10" style="-fx-padding: 10; -fx-background-color: #505050ff;">
+            <!--
+            <VBox prefWidth="180.0" spacing="8.0">
+              <padding>
+                <Insets top="8.0" right="8.0" bottom="8.0" left="8.0"/>
+              </padding>
+              <Label text="TOOLBOX" style="-fx-font-weight: bold;"/>
+              <VBox spacing="4.0">
+                <ToggleButton text="Pencil"/>
+                <ToggleButton text="Eraser"/>
+                <ToggleButton text="Picker"/>
+                <ToggleButton text="Fill"/>
+                <ToggleButton text="Line"/>
+                <ToggleButton text="ect"/>
+                <ToggleButton text="Ellipse"/>
+                <ToggleButton text="Select"/>
+                <ToggleButton text="Clone"/>
+              </VBox>
+              <Separator/>
+              <Label text="Size:"/>
+              <HBox spacing="6.0">
+                <Slider min="1" max="100" value="12"/>
+                <Label text="12 px"/>
+              </HBox>
+              <Label text="Opacity:"/>
+              <HBox spacing="6.0">
+                <Slider min="0" max="100" value="100"/>
+                <Label text="100%"/>
+              </HBox>
+              <Separator/>
+              <Label text="Foreground/Background"/>
+              <HBox spacing="8.0">
+                <Rectangle width="24" height="24" style="-fx-fill: black; -fx-stroke: gray;"/>
+                <Rectangle width="24" height="24" style="-fx-fill: white; -fx-stroke: gray;"/>
+                <Button text="Swap ↔"/>
+              </HBox>
+              <Separator/>
+              <Label text="Recent Colors:"/>
+              <GridPane hgap="4" vgap="4">                
+                <Rectangle GridPane.columnIndex="0" GridPane.rowIndex="0" width="18" height="18" style="-fx-fill: #000000; -fx-stroke: gray;"/>
+                <Rectangle GridPane.columnIndex="1" GridPane.rowIndex="0" width="18" height="18" style="-fx-fill: #777777; -fx-stroke: gray;"/>
+                <Rectangle GridPane.columnIndex="2" GridPane.rowIndex="0" width="18" height="18" style="-fx-fill: #ffffff; -fx-stroke: gray;"/>
+              </GridPane>
+            </VBox>
+            -->
+          </content>
+        </ScrollPane>
+        <ScrollPane fx:id="scrollPane" fitToHeight="true" fitToWidth="true">
+          <content>
+            <StackPane fx:id="canvasContainer">
+              <!-- A Canvas node will be created/managed by the MainController at runtime -->
+            </StackPane>
+          </content>
+        </ScrollPane>
+        <ScrollPane fitToHeight="true" fitToWidth="true" maxWidth="550.0" minWidth="1.0" prefWidth="550">
+          <content>
+            <VBox spacing="10" style="-fx-padding: 0;">
               <children>
-                <Label style="-fx-font-weight: 700;" text="Tools" textFill="WHITE"/>
-                <Button id="btnSelect" onAction="#onGenericClick" prefHeight="25.0" prefWidth="218.0" text="Select"/>
-                <Button id="btnBrush" onAction="#onGenericClick" prefHeight="25.0" prefWidth="227.0" text="Brush"/>
-                <Button id="btnEraser" onAction="#onGenericClick" prefHeight="25.0" prefWidth="223.0" text="Eraser"/>
-                <Button id="btnFill" onAction="#onGenericClick" prefHeight="25.0" prefWidth="222.0" text="Fill"/>
-                <Button id="btnColorPicker" onAction="#onGenericClick" prefHeight="25.0" prefWidth="229.0" text="Color Picker"/>
+                <TitledPane expanded="true" prefHeight="733.0" prefWidth="330.0" text="History" wrapText="true" VBox.vgrow="ALWAYS">
+                  <content>
+                    <ListView fx:id="lstHistory" prefHeight="500.0" VBox.vgrow="ALWAYS" />
+                  </content>
+                </TitledPane>
+                <TitledPane expanded="true" prefHeight="733.0" prefWidth="330.0" text="Activity Log" wrapText="true" VBox.vgrow="ALWAYS">
+                  <content>
+                    <ListView fx:id="lstActivityLog" prefHeight="500.0" VBox.vgrow="ALWAYS" />
+                  </content>
+                </TitledPane>
               </children>
             </VBox>
           </content>
         </ScrollPane>
-        <StackPane>
-          <children>
-            <ScrollPane fitToHeight="true" fitToWidth="true">
-              <content>
-                <Pane fx:id="canvasPane" prefHeight="600.0" prefWidth="800.0" style="-fx-background-color: #ddd; -fx-border-color: #bbb;">
-                  <!-- A Canvas node will be created/managed by the controller at runtime -->
-                </Pane>
-              </content>
-            </ScrollPane>
-          </children>
-        </StackPane>
       </items>
     </SplitPane>
   </center>
 
   <bottom>
-    <HBox alignment="CENTER_LEFT" spacing="2.0" BorderPane.alignment="CENTER_LEFT">
+    <HBox alignment="CENTER_LEFT" fillHeight="true" spacing="8.0" BorderPane.alignment="CENTER_LEFT">
       <children>
-        <Label text="Image: 800 x 600">
-          <HBox.margin>
-            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-          </HBox.margin>
-        </Label>
-        <Separator orientation="VERTICAL"/>
-        <Label text="Zoom: 100%">
-          <HBox.margin>
-            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-          </HBox.margin>
-        </Label>
-        <Separator orientation="VERTICAL"/>
-        <Label text="Pos: (0, 0)">
-          <HBox.margin>
-            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-          </HBox.margin>
-        </Label>
-        <Separator orientation="VERTICAL"/>
-        <Label text="Mode: Drawing">
-          <HBox.margin>
-            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-          </HBox.margin>
-        </Label>
-        <Separator orientation="VERTICAL"/>
+        <Label fx:id="lblImageSize" text="0 x 0 px" textAlignment="RIGHT" />
+        <Separator orientation="VERTICAL" />
+        <Label fx:id="lblFileSize" text=" Size: 0" />
+        <Separator orientation="VERTICAL" />
+        <ComboBox fx:id="cmbZoomPresets" onAction="#onZoomPresetSelected" prefWidth="100.0" promptText="100%">
+        </ComboBox>
+        <Separator orientation="VERTICAL" />
+        <Label fx:id="lblPosition" text="" />
+        <Separator orientation="VERTICAL" />
+        <Label fx:id="lblMode" text="Mode: Drawing" />
       </children>
-      <opaqueInsets>
-        <Insets/>
-      </opaqueInsets>
-      <padding>
-        <Insets top="5.0"/>
-      </padding>
     </HBox>
   </bottom>
 </BorderPane>

@@ -1,103 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.pixelcraft</groupId>
-  <artifactId>pixelcraft</artifactId>
-  <packaging>jar</packaging>
-  <version>1.0-SNAPSHOT</version>
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-  <name>PixelCraft Image Editor</name>
-  <description>A simple image editor built with JavaFX</description>
-  <url>http://maven.apache.org</url>
+    <groupId>com.pixelcraft</groupId>
+    <artifactId>pixelcraft</artifactId>
+    <version>1.0-SNAPSHOT</version>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.testfx</groupId>
-      <artifactId>testfx-junit5</artifactId>
-      <version>4.0.18</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <version>4.0.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.7.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-controls</artifactId>
-      <version>13</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-fxml</artifactId>
-      <version>13</version>
-    </dependency>
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <javafx.version>21.0.1</javafx.version>
+    </properties>
 
-    <dependency>
-      <groupId>no.tornado</groupId>
-      <artifactId>tornadofx-android-compat</artifactId>
-      <version>1.0.1</version>
-    </dependency>
+    <dependencies>
+        <!-- JavaFX Controls -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
 
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-swing</artifactId>
-      <version>25-ea+21</version>
-    </dependency>
+        <!-- JavaFX FXML -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
 
-    <dependency>
-      <groupId>org.kordamp.ikonli</groupId>
-      <artifactId>ikonli-javafx</artifactId>
-      <version>12.4.0</version>
-    </dependency>
+        <!-- JavaFX Swing (for SwingFXUtils) -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
 
-    <dependency>
-      <groupId>org.kordamp.ikonli</groupId>
-      <artifactId>ikonli-fontawesome5-pack</artifactId>
-      <version>12.4.0</version>
-    </dependency>
+        <!-- JavaFX Graphics -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
 
-  </dependencies>
+        <!-- TwelveMonkeys ImageIO for faster image loading -->
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-jpeg</artifactId>
+            <version>3.10.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-core</artifactId>
+            <version>3.10.1</version>
+        </dependency>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.14.1</version>
-        <configuration>
-          <release>21</release>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.openjfx</groupId>
-        <artifactId>javafx-maven-plugin</artifactId>
-        <version>0.0.6</version>
-        <executions>
-          <execution>
-            <!-- Default configuration for running -->
-            <!-- Usage: mvn clean javafx:run -->
-            <id>default-cli</id>
-            <configuration>
-              <mainClass>com.pixelcraft.PixelCraft</mainClass>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-        <filtering>true</filtering>
-      </resource>
-    </resources>
-  </build>
+        <!-- JUnit for testing -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.10.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.10.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Mockito for mocking -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.8.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- TestFX for JavaFX testing -->
+        <dependency>
+            <groupId>org.testfx</groupId>
+            <artifactId>testfx-core</artifactId>
+            <version>4.0.18</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testfx</groupId>
+            <artifactId>testfx-junit5</artifactId>
+            <version>4.0.18</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Monocle (Headless testing for JavaFX) -->
+        <dependency>
+            <groupId>org.testfx</groupId>
+            <artifactId>openjfx-monocle</artifactId>
+            <version>21.0.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Maven Compiler Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <release>21</release>
+                </configuration>
+                <executions>
+                    <!-- Separate configuration for test compilation -->
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <compilerArgs>
+                                <arg>--add-reads</arg>
+                                <arg>com.pixelcraft=ALL-UNNAMED</arg>
+                                <arg>--add-exports</arg>
+                                <arg>com.pixelcraft/com.pixelcraft.commands=ALL-UNNAMED</arg>
+                                <arg>--add-exports</arg>
+                                <arg>com.pixelcraft/com.pixelcraft.manager=ALL-UNNAMED</arg>
+                                <arg>--add-exports</arg>
+                                <arg>com.pixelcraft/com.pixelcraft.util=ALL-UNNAMED</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- JavaFX Maven Plugin -->
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>com.pixelcraft.PixelCraft</mainClass>
+                </configuration>
+            </plugin>
+
+            <!-- Maven Surefire Plugin for running tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.2</version>
+                <configuration>
+                    <jvm>C:\Users\NathanKhupe\.jdk\jdk-21.0.8\bin\java.exe</jvm>
+                    <argLine>
+                        --add-modules javafx.controls,javafx.fxml,javafx.graphics
+                        --add-opens javafx.graphics/com.sun.javafx.application=ALL-UNNAMED
+                        --add-opens javafx.graphics/com.sun.glass.ui=ALL-UNNAMED
+                        --add-opens javafx.graphics/com.sun.glass.ui=org.testfx
+                        --add-exports javafx.graphics/com.sun.glass.ui=ALL-UNNAMED
+                        --add-exports javafx.graphics/com.sun.javafx.util=ALL-UNNAMED
+                        --add-exports javafx.graphics/com.sun.javafx.util=org.testfx.monocle
+                        --add-opens javafx.graphics/com.sun.glass.ui.monocle=ALL-UNNAMED
+                        --add-exports javafx.base/com.sun.javafx.logging=ALL-UNNAMED
+                        --add-exports javafx.base/com.sun.javafx.logging=org.testfx.monocle
+                        --add-exports javafx.graphics/com.sun.glass.ui=org.testfx.monocle
+                    </argLine>
+                    <systemPropertyVariables>
+                        <testfx.robot>glass</testfx.robot>
+                        <testfx.headless>true</testfx.headless>
+                        <prism.order>sw</prism.order>
+                        <prism.text>t2k</prism.text>
+                        <glass.platform>Monocle</glass.platform>
+                        <monocle.platform>Headless</monocle.platform>
+                        <prism.verbose>true</prism.verbose>
+                        <java.awt.headless>true</java.awt.headless>
+                    </systemPropertyVariables>
+                    <forkCount>1</forkCount>
+                    <reuseForks>false</reuseForks>
+                </configuration>
+            </plugin>
+
+            <!-- Maven Shade Plugin for creating executable JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.pixelcraft.PixelCraft</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[21,)</version>
+                                </requireJavaVersion>
+                                <requireMavenVersion>
+                                    <version>[3.6.0,)</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
