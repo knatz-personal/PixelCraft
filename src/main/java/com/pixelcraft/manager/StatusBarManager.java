@@ -73,14 +73,18 @@ public class StatusBarManager {
             zoomButtonCell.setText(String.format("%.0f%%", zoomLevel * 100));
         }
 
-        // Select matching preset if exists
-        for (Pair<String, Double> preset : cmbZoomPresets.getItems()) {
-            if (Math.abs(preset.getValue() - zoomLevel) < 0.001) {
-                cmbZoomPresets.getSelectionModel().select(preset);
-                return;
+        // Defer selection changes to avoid JavaFX IndexOutOfBoundsException bug (JDK-8197846)
+        // when selection modifications happen during mouse/click events on the ComboBox
+        javafx.application.Platform.runLater(() -> {
+            // Select matching preset if exists
+            for (Pair<String, Double> preset : cmbZoomPresets.getItems()) {
+                if (Math.abs(preset.getValue() - zoomLevel) < 0.001) {
+                    cmbZoomPresets.getSelectionModel().select(preset);
+                    return;
+                }
             }
-        }
-        cmbZoomPresets.getSelectionModel().clearSelection();
+            cmbZoomPresets.getSelectionModel().clearSelection();
+        });
     }
 
     private void initZoomPresets() {
@@ -115,7 +119,12 @@ public class StatusBarManager {
             @Override
             protected void updateItem(Pair<String, Double> item, boolean empty) {
                 super.updateItem(item, empty);
-                setText("100%"); // Will be updated by updateZoom()
+                // Show the preset label when an item is selected
+                if (empty || item == null) {
+                    setText("100%"); // Default when nothing selected
+                } else {
+                    setText(item.getKey()); // Use the preset's label (e.g., "1000%")
+                }
             }
         };
         cmbZoomPresets.setButtonCell(zoomButtonCell);

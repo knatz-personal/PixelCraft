@@ -2,14 +2,12 @@ package com.pixelcraft.manager;
 
 import com.pixelcraft.event.IViewportChangeListener;
 import com.pixelcraft.util.Globals;
-import com.pixelcraft.util.logging.LoggerFactory;
 
 import javafx.geometry.Bounds;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.ScrollPane;
 
 public final class ViewportManager {
-    private static final com.pixelcraft.util.logging.Logger LOG = LoggerFactory.getLogger(ViewportManager.class);
     private static final double ZOOM_FIT_PADDING = 0.98;
 
     private final ScrollPane scrollPane;
@@ -38,14 +36,12 @@ public final class ViewportManager {
     }
 
     public void setZoom(double zoom) {
-        LOG.info("setZoom(" + zoom + ") - current=" + zoomLevel);
+        isPanning = false;
         double clamped = clamp(zoom, Globals.MIN_ZOOM, Globals.MAX_ZOOM);
         if (clamped == zoomLevel) {
-            LOG.info("setZoom() - no change needed");
             return;
         }
         this.zoomLevel = clamped;
-        LOG.info("setZoom() - new level=" + zoomLevel + ", notifying listener");
         notifyZoomChanged(); // listener should resize canvas & redraw
     }
 
@@ -58,18 +54,14 @@ public final class ViewportManager {
     }
 
     public void zoomToFit(double imageWidth, double imageHeight) {
-        LOG.info("zoomToFit(" + imageWidth + ", " + imageHeight + ")");
         if (imageWidth <= 0 || imageHeight <= 0) {
-            LOG.warn("zoomToFit() - invalid image dimensions");
             return;
         }
 
         Bounds viewportBounds = scrollPane.getViewportBounds();
         double viewportWidth = viewportBounds.getWidth();
         double viewportHeight = viewportBounds.getHeight();
-        LOG.info("zoomToFit() - viewport: " + viewportWidth + "x" + viewportHeight);
         if (viewportWidth <= 0 || viewportHeight <= 0) {
-            LOG.warn("zoomToFit() - invalid viewport, defaulting to 1.0");
             setZoom(1.0);
             return;
         }
@@ -77,7 +69,6 @@ public final class ViewportManager {
         double scaleX = viewportWidth / imageWidth;
         double scaleY = viewportHeight / imageHeight;
         double fitZoom = Math.min(scaleX, scaleY) * ZOOM_FIT_PADDING;
-        LOG.info("zoomToFit() - scaleX=" + scaleX + ", scaleY=" + scaleY + ", fitZoom=" + fitZoom);
         setZoom(fitZoom);
     }
 
@@ -92,19 +83,20 @@ public final class ViewportManager {
         setZoom(newZoom);
     }
 
-    public void startPan(double viewportX, double viewportY) {
+    public void startPan(double screenX, double screenY) {
         isPanning = true;
-        panStartX = viewportX;
-        panStartY = viewportY;
+        panStartX = screenX;
+        panStartY = screenY;
         scrollStartH = scrollPane.getHvalue();
         scrollStartV = scrollPane.getVvalue();
     }
 
-    public void updatePan(double viewportX, double viewportY) {
+    public void updatePan(double screenX, double screenY) {
         if (!isPanning) return;
 
-        double deltaX = viewportX - panStartX;
-        double deltaY = viewportY - panStartY;
+        // Use screen coordinates to avoid jitter caused by canvas moving during pan
+        double deltaX = screenX - panStartX;
+        double deltaY = screenY - panStartY;
 
         // Get viewport bounds for calculations
         Bounds vp = scrollPane.getViewportBounds();

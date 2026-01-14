@@ -6,7 +6,6 @@ import java.net.URL;
 import com.pixelcraft.util.GlobalExceptionHandler;
 import com.pixelcraft.util.Globals;
 import com.pixelcraft.util.logging.LoggerFactory;
-import com.pixelcraft.util.logging.eLogLevel;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -16,19 +15,8 @@ import javafx.stage.Stage;
 
 public class PixelCraft extends Application
 {
-    private static final com.pixelcraft.util.logging.Logger LOG;
+    private static final com.pixelcraft.util.logging.Logger LOG = LoggerFactory.getLogger(PixelCraft.class);
     
-    static {
-        // Configure default logging for the entire application
-        LoggerFactory.setDefaultConfig(
-            new LoggerFactory.LoggerConfig()
-                .enableConsoleLogWithColors(eLogLevel.INFO)
-                .enableFileLog("logs/pixelcraft.log", eLogLevel.DEBUG)
-        );
-        
-        LOG = LoggerFactory.getLogger(PixelCraft.class);
-    }
-
     @Override
     public void start(Stage primaryStage) 
     {
@@ -64,10 +52,8 @@ public class PixelCraft extends Application
     }
 
     public static void main( String[] args )
-    {
-        // Initialize global exception handler
-        GlobalExceptionHandler.initialize(true);
-        
+    {        
+        GlobalExceptionHandler.initialize(true);   
         try
         {
             LOG.info("Launching PixelCraft!");

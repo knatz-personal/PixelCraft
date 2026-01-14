@@ -42,21 +42,14 @@ public class ObservableListLogTarget implements ILogTarget {
 
         String formattedMessage = formatMessage(level, className, message);
 
-        // Must update UI on JavaFX Application Thread
-        if (Platform.isFxApplicationThread()) {
-            addToList(formattedMessage);
-        } else {
-            Platform.runLater(() -> addToList(formattedMessage));
-        }
+        // Always use Platform.runLater to avoid JavaFX IndexOutOfBoundsException bug
+        // when list modifications happen during selection events (JDK-8197846)
+        Platform.runLater(() -> addToList(formattedMessage));
 
         // If there's a throwable, add its message as well
         if (throwable != null) {
             String errorMsg = "  → " + throwable.getClass().getSimpleName() + ": " + throwable.getMessage();
-            if (Platform.isFxApplicationThread()) {
-                addToList(errorMsg);
-            } else {
-                Platform.runLater(() -> addToList(errorMsg));
-            }
+            Platform.runLater(() -> addToList(errorMsg));
         }
     }
 

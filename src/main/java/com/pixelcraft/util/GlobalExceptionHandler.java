@@ -99,7 +99,8 @@ public class GlobalExceptionHandler implements Thread.UncaughtExceptionHandler
             Alert alert = new Alert(AlertType.ERROR);
             alert.setTitle("Unexpected Error");
             alert.setHeaderText("An unexpected error has occurred");
-            alert.setContentText(throwable.getClass().getSimpleName() + ": " + throwable.getMessage());
+            String text = String.format("%s:%s", throwable.getClass().getSimpleName(), throwable.getMessage());
+            alert.setContentText(text);
             
             // Create expandable Exception details
             StringWriter sw = new StringWriter();

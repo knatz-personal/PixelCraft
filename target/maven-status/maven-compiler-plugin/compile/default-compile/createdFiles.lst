@@ -28,7 +28,6 @@ module-info.class
 com\pixelcraft\commands\ZoomSetCommand.class
 com\pixelcraft\util\logging\ILogTarget.class
 com\pixelcraft\commands\ZoomInCommand.class
-com\pixelcraft\util\logging\LoggerFactory$LoggerConfig.class
 com\pixelcraft\util\GlobalExceptionHandler.class
 com\pixelcraft\event\IViewportChangeListener.class
 com\pixelcraft\builders\RecentsMenuBuilder.class

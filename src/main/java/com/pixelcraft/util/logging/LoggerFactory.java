@@ -1,5 +1,9 @@
 package com.pixelcraft.util.logging;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,86 +14,40 @@ import javafx.collections.ObservableList;
  */
 public class LoggerFactory {
     private static final Map<String, Logger> loggerCache = new HashMap<>();
+    private static final String APP_NAME = "PixelCraft";
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    
     private static LoggerConfig defaultConfig = new LoggerConfig()
-        .enableConsoleLog(eLogLevel.INFO);
-
+        .enableConsoleLog(eLogLevel.INFO)
+        .enableFileLog(getDailyLogFilePath(), eLogLevel.DEBUG);
+    
     /**
-     * Configuration class for setting up loggers.
+     * Gets the path for daily log file in the system temp directory.
+     * All logs for the same day will be written to the same file.
+     * 
+     * @return The path to the daily log file
      */
-    public static class LoggerConfig {
-        private boolean consoleEnabled = false;
-        private eLogLevel consoleLevel = eLogLevel.INFO;
-        private boolean consoleColorEnabled = false;
-
-        private boolean fileEnabled = false;
-        private String filePattern = "logs/app.log";
-        private eLogLevel fileLevel = eLogLevel.DEBUG;
-
-        private boolean jutilEnabled = false;
-        private eLogLevel jutilLevel = eLogLevel.DEBUG;
-
-        private boolean observableEnabled = false;
-        private eLogLevel observableLevel = eLogLevel.INFO;
-        private int observableMaxEntries = 5000;
-
-        public LoggerConfig enableConsoleLog(eLogLevel level) {
-            this.consoleEnabled = true;
-            this.consoleLevel = level;
-            return this;
+    public static String getDailyLogFilePath() {
+        String tempDir = System.getenv("TEMP");
+        if (tempDir == null || tempDir.isEmpty()) {
+            tempDir = System.getProperty("java.io.tmpdir");
         }
-
-        public LoggerConfig enableConsoleLogWithColors(eLogLevel level) {
-            this.consoleEnabled = true;
-            this.consoleLevel = level;
-            this.consoleColorEnabled = true;
-            return this;
+        String dateStr = LocalDate.now().format(DATE_FORMATTER);
+        Path logPath = Paths.get(tempDir, APP_NAME, String.format("%s.log", dateStr));
+        return logPath.toString();
+    }
+    
+    /**
+     * Gets the log directory path in the system temp directory.
+     * 
+     * @return The path to the log directory
+     */
+    public static Path getLogDirectory() {
+        String tempDir = System.getenv("TEMP");
+        if (tempDir == null || tempDir.isEmpty()) {
+            tempDir = System.getProperty("java.io.tmpdir");
         }
-
-        public LoggerConfig enableFileLog(String filePath, eLogLevel level) {
-            this.fileEnabled = true;
-            this.filePattern = filePath;
-            this.fileLevel = level;
-            return this;
-        }
-
-        public LoggerConfig enableActivityLog(eLogLevel level, int maxEntries) {
-            this.observableEnabled = true;
-            this.observableLevel = level;
-            this.observableMaxEntries = maxEntries;
-            return this;
-        }
-
-        public LoggerConfig enableJutilLog(eLogLevel level) {
-            this.jutilEnabled = true;
-            this.jutilLevel = level;
-            return this;
-        }
-
-        Logger createLogger(String name) {
-            return createLogger(name, null);
-        }
-
-        Logger createLogger(String name, ObservableList<String> list) {
-            Logger logger = Logger.getLogger(name);
-
-            if (consoleEnabled) {
-                logger.addTarget(new ConsoleLogTarget(consoleLevel, true, consoleColorEnabled));
-            }
-
-            if (fileEnabled) {
-                logger.addTarget(new FileLogTarget(filePattern, fileLevel));
-            }
-
-            if (observableEnabled && list != null) {
-                logger.addTarget(new ObservableListLogTarget(list, observableLevel, observableMaxEntries, true));
-            }
-
-            if (jutilEnabled) {
-                logger.addTarget(new JutilLogTarget(name, jutilLevel));
-            }
-
-            return logger;
-        }
+        return Paths.get(tempDir, APP_NAME);
     }
 
     /**

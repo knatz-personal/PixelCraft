@@ -6,7 +6,7 @@ public final class Globals {
         /* Do not allow creation of instances */ }
 
     public static final double MIN_ZOOM = 0.01;
-    public static final double MAX_ZOOM = 10.00;
+    public static final double MAX_ZOOM = 10.01;
 
     public static final double ZOOM_STEP = 1.1; //10% Zoom
     public static final double DOUBLE_DELTA = 0.0001;

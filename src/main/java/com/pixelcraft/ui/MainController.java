@@ -87,7 +87,6 @@ public class MainController {
     private final CommandHistory commandHistory = new CommandHistory();
     private final RecentFilesManager recentsManager = new RecentFilesManager();
     private final PauseTransition zoomDebouncer = new PauseTransition(Duration.millis(100));
-    private Logger logger;
     private CanvasManager canvasManager;
     private ViewportManager viewportManager;
     private FileManager fileManager;
@@ -95,20 +94,10 @@ public class MainController {
     private HistoryDisplayManager historyManager;
     //#endregion
 
-    //#region Activity Logging
-    private void log(String message) {
-        if (logger != null) {
-            logger.info(message);
-        }
-    }
-    //#endregion
-
     //#region FXML events
     @FXML
     @SuppressWarnings("unused")
     public void initialize() {
-        log("MainController.initialize() started");
-        
         // Load icon font
         IconUtil.loadIconFont();
         
@@ -118,8 +107,15 @@ public class MainController {
         // Configure the StackPane container
         canvasContainer.setAlignment(Pos.CENTER);
         // Initialize logger with ObservableList target for activity log
-        logger = Logger.getLogger(MainController.class)
+        Logger.getLogger(MainController.class)
             .addTarget(new ObservableListLogTarget(lstActivityLog.getItems(), eLogLevel.INFO, 5_000_000, true));
+        
+        // Workaround for JavaFX bug: clicking empty ListView causes IndexOutOfBoundsException
+        lstActivityLog.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, event -> {
+            if (lstActivityLog.getItems().isEmpty()) {
+                event.consume();
+            }
+        });
         
         canvasContainer.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
         canvasContainer.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
@@ -142,7 +138,6 @@ public class MainController {
         // Initial render
         canvasManager.drawCheckerboard();
         statusBarManager.updateMode("Drawing");
-        log("MainController.initialize() completed");
 
         // Setup keyboard shortcuts when scene is available
         canvas.sceneProperty().addListener((obs, old, scene) -> {
@@ -155,7 +150,6 @@ public class MainController {
     @FXML
     @SuppressWarnings("unused")
     public void onNewImage(ActionEvent event) {
-        log("onNewImage() called");
         //TODO: Show dialog to get image dimensions
         ICommand cmd = new NewImageCommand(fileManager, Globals.DEFAULT_WIDTH, Globals.DEFAULT_HEIGHT);
         executeCommand(cmd);
@@ -164,10 +158,8 @@ public class MainController {
     @FXML
     @SuppressWarnings("unused")
     public void onOpenImage(ActionEvent event) {
-        log("onOpenImage() called - creating OpenImageCommand");
         ICommand cmd = new OpenImageCommand(fileManager, canvas);
         executeCommand(cmd);
-        log("onOpenImage() - command executed");
     }
 
     @FXML
@@ -358,7 +350,9 @@ public class MainController {
             // Don't auto-fit on every resize - only on initial load
             // User manual zoom should be preserved
         });
-        scrollPane.setOnScroll(this::handleScroll);
+        // Use event filter (capturing phase) instead of handler (bubbling phase)
+        // This ensures we intercept Ctrl+Scroll before ScrollPane processes it
+        scrollPane.addEventFilter(ScrollEvent.SCROLL, this::handleScroll);
         setupCanvasEventHandlers();
     }
 
@@ -374,8 +368,6 @@ public class MainController {
         fileManager.setListener(new IImageChangeListener() {
             @Override
             public void onImageChanged(Optional<RasterImage> image) {
-                log("onImageChanged() triggered - image present: " + image.isPresent());
-                
                 // Update file size from actual file when image is loaded
                 fileManager.getCurrentFile().ifPresent(file -> {
                     if (file.exists()) {
@@ -384,25 +376,16 @@ public class MainController {
                 });
                 
                 image.ifPresent(img -> {
-                    log("  Image dimensions: " + img.getWidth() + "x" + img.getHeight() + ", valid: " + img.isValid());
                     // Fit to viewport and render immediately
-                    log("  Calling zoomToFit...");
                     viewportManager.zoomToFit(img.getWidth(), img.getHeight());
-                    log("  zoomToFit done, zoom level: " + viewportManager.getZoomLevel());
-                    log("  Calling applyZoom...");
                     applyZoom();
-                    log("  applyZoom done");
                     // Center the canvas
-                    Platform.runLater(() -> {
-                        log("  Centering canvas (runLater)");
-                        centerCanvas();
-                    });
+                    Platform.runLater(() -> centerCanvas());
                 });
             }
 
             @Override
             public void onFileChanged(Optional<File> file) {
-                log("onFileChanged() - file: " + file.map(f -> f.getName()).orElse("none"));
                 updateWindowTitle();
                 file.ifPresent(f -> {
                     recentsManager.add(f.getAbsolutePath());
@@ -421,19 +404,25 @@ public class MainController {
     //#region Event Handlers
     private void handleScroll(ScrollEvent event) {
         if (!event.isControlDown()) {
-            return;
+            return; // Let ScrollPane handle normal scrolling (panning)
         }
+        
+        // Ctrl+Scroll is always for zooming - consume event to prevent scrolling
         event.consume();
 
         double currentZoom = viewportManager.getZoomLevel();
-        double delta = event.getDeltaY() > 0 ? Globals.ZOOM_STEP : (1.0 / Globals.ZOOM_STEP);
-        double newZoom = currentZoom * delta;
+        boolean zoomingIn = event.getDeltaY() > 0;
         
-        // Prevent command execution if zoom won't change (at limits)
-        double clampedZoom = Math.clamp(newZoom, Globals.MIN_ZOOM, Globals.MAX_ZOOM);
-        if (Math.abs(clampedZoom - currentZoom) < 0.0001) {
-            return; // Already at limit, don't create command
+        // Check if we're at a limit and trying to zoom further in that direction
+        if (zoomingIn && currentZoom >= Globals.MAX_ZOOM) {
+            return; // Already at max zoom, can't zoom in further
         }
+        if (!zoomingIn && currentZoom <= Globals.MIN_ZOOM) {
+            return; // Already at min zoom, can't zoom out further
+        }
+
+        double delta = zoomingIn ? Globals.ZOOM_STEP : (1.0 / Globals.ZOOM_STEP);
+        double newZoom = currentZoom * delta;
 
         ICommand cmd = new ZoomSetCommand(
                 scrollPane, canvas,
@@ -453,8 +442,8 @@ public class MainController {
 
     private void handleMousePressed(MouseEvent event) {
         if (event.isSecondaryButtonDown()) {
-            // Use local mouse coordinates for pan start
-            viewportManager.startPan(event.getX(), event.getY());
+            // Use screen coordinates to avoid jitter (canvas moves during pan)
+            viewportManager.startPan(event.getScreenX(), event.getScreenY());
             canvas.setCursor(Cursor.CLOSED_HAND);
             event.consume();
         }
@@ -462,8 +451,8 @@ public class MainController {
 
     private void handleMouseDragged(MouseEvent event) {
         if (viewportManager.isPanning() && event.isSecondaryButtonDown()) {
-            // Use local mouse coordinates for pan update
-            viewportManager.updatePan(event.getX(), event.getY());
+            // Use screen coordinates to avoid jitter (canvas moves during pan)
+            viewportManager.updatePan(event.getScreenX(), event.getScreenY());
             handleMouseMove(event);
             event.consume();
         }
@@ -500,25 +489,20 @@ public class MainController {
     }
 
     private void openRecentFile(String path) {
-        log("openRecentFile() - path: " + path);
         ICommand cmd = new OpenRecentCommand(fileManager, path);
         executeCommand(cmd);
     }
 
     private void applyZoom() {
-        log("applyZoom() called, isApplyingZoom=" + isApplyingZoom);
         if (isApplyingZoom) {
-            log("  SKIPPED - already applying zoom");
             return;
         }
         isApplyingZoom = true;
         
         try {
             fileManager.getCurrentImage().ifPresent(img -> {
-                log("  Image found: " + img.getWidth() + "x" + img.getHeight() + ", valid=" + img.isValid());
                 // Validate image is valid
                 if (!img.isValid() || img.getWidth() <= 0 || img.getHeight() <= 0) {
-                    log("  SKIPPED - image invalid");
                     return;
                 }
 
@@ -529,7 +513,6 @@ public class MainController {
                 double zoomLevel = viewportManager.getZoomLevel();
                 double imageWidth = img.getWidth();
                 double imageHeight = img.getHeight();
-                log("  zoomLevel=" + zoomLevel + ", imageSize=" + imageWidth + "x" + imageHeight);
                 statusBarManager.updateImageSize(imageWidth, imageHeight);
                 
                 // Calculate the scaled canvas size
@@ -543,7 +526,6 @@ public class MainController {
                     double scale = maxCanvasSize / Math.max(scaledWidth, scaledHeight);
                     scaledWidth *= scale;
                     scaledHeight *= scale;
-                    log("  Canvas clamped to: " + scaledWidth + "x" + scaledHeight);
                 }
 
                 // Reset scale transforms - we don't use them anymore
@@ -552,8 +534,6 @@ public class MainController {
 
                 if (Double.isFinite(scaledWidth) && Double.isFinite(scaledHeight)
                         && scaledWidth > 0 && scaledHeight > 0) {
-                    log("  Setting canvas size to: " + scaledWidth + "x" + scaledHeight);
-                    
                     // Clear the canvas BEFORE resizing to prevent flicker
                     // (old content getting stretched to new size)
                     canvas.getGraphicsContext2D().clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
@@ -563,20 +543,14 @@ public class MainController {
                     canvas.setHeight(scaledHeight);
 
                     // Update container size for proper scrolling
-                    log("  Container size: " + scaledWidth + "x" + scaledHeight);
                     canvasContainer.setMinSize(scaledWidth, scaledHeight);
                     canvasContainer.setPrefSize(scaledWidth, scaledHeight);
 
-                    log("  Calling canvasManager.render()...");
                     canvasManager.renderScaled(img, scaledWidth, scaledHeight);
-                    log("  Render complete");
-                } else {
-                    log("  SKIPPED - dimensions out of bounds");
                 }
             });
         } finally {
             isApplyingZoom = false;
-            log("applyZoom() finished");
         }
     }
 

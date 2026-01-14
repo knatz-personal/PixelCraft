@@ -53,6 +53,16 @@ public class HistoryDisplayManager {
     public HistoryDisplayManager(ListView<Label> lstHistory, CommandHistory commandHistory) {
         this.lstHistory = lstHistory;
         this.commandHistory = commandHistory;
+        
+        // Workaround for JavaFX bug: clicking empty ListView causes IndexOutOfBoundsException
+        // See: https://bugs.openjdk.org/browse/JDK-8197846
+        if (lstHistory != null) {
+            lstHistory.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, event -> {
+                if (lstHistory.getItems().isEmpty()) {
+                    event.consume();
+                }
+            });
+        }
     }
     
     /**
@@ -63,26 +73,32 @@ public class HistoryDisplayManager {
     public void update() {
         if (lstHistory == null) return;
         
-        lstHistory.getItems().clear();
-        
-        // Add redo stack (future actions, grayed out)
-        List<ICommand> redoList = new ArrayList<>(commandHistory.getRedoStack());
-        Collections.reverse(redoList);
-        for (ICommand cmd : redoList) {
-            Label lbl = new Label(cmd.getDescription());
-            lbl.setTextFill(Color.DARKGRAY);
-            // Use redo icon for future actions
-            lbl.setGraphic(IconUtil.createIconByName("redo"));
-            lstHistory.getItems().add(lbl);
-        }
-        
-        // Add undo stack (past actions)
-        for (ICommand cmd : commandHistory.getUndoStack()) {
-            Label lbl = new Label(cmd.getDescription());
-            lbl.setTextFill(Color.BLACK);
-            // Use undo icon for past actions
-            lbl.setGraphic(IconUtil.createIconByName("undo"));
-            lstHistory.getItems().add(lbl);
-        }
+        // Defer update to avoid JavaFX IndexOutOfBoundsException bug (JDK-8197846)
+        // when list modifications happen during mouse/selection events
+        javafx.application.Platform.runLater(() -> {
+            // Clear selection first to avoid selection model issues
+            lstHistory.getSelectionModel().clearSelection();
+            lstHistory.getItems().clear();
+            
+            // Add redo stack (future actions, grayed out)
+            List<ICommand> redoList = new ArrayList<>(commandHistory.getRedoStack());
+            Collections.reverse(redoList);
+            for (ICommand cmd : redoList) {
+                Label lbl = new Label(cmd.getDescription());
+                lbl.setTextFill(Color.DARKGRAY);
+                // Use redo icon for future actions
+                lbl.setGraphic(IconUtil.createIconByName("redo"));
+                lstHistory.getItems().add(lbl);
+            }
+            
+            // Add undo stack (past actions)
+            for (ICommand cmd : commandHistory.getUndoStack()) {
+                Label lbl = new Label(cmd.getDescription());
+                lbl.setTextFill(Color.BLACK);
+                // Use undo icon for past actions
+                lbl.setGraphic(IconUtil.createIconByName("undo"));
+                lstHistory.getItems().add(lbl);
+            }
+        });
     }
 }
