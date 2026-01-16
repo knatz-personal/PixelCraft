@@ -62,7 +62,7 @@ class StatusBarManagerTest {
     void testUpdatePosition() {
         statusBarManager.updatePosition(150, 250);
         
-        assertEquals("Pos: (150, 250)", lblPosition.getText());
+        assertEquals(String.format("%15s", "(150, 250)"), lblPosition.getText());
     }
 
     @Test
@@ -70,7 +70,7 @@ class StatusBarManagerTest {
     void testUpdatePositionWithDecimals() {
         statusBarManager.updatePosition(123.7, 456.2);
         
-        assertEquals("Pos: (124, 456)", lblPosition.getText());
+        assertEquals(String.format("%15s", "(124, 456)"), lblPosition.getText());
     }
 
     @Test
@@ -78,7 +78,7 @@ class StatusBarManagerTest {
     void testUpdatePositionWithNegativeValues() {
         statusBarManager.updatePosition(-10, -20);
         
-        assertEquals("Pos: (-10, -20)", lblPosition.getText());
+        assertEquals(String.format("%15s", "(-10, -20)"), lblPosition.getText());
     }
 
     @Test
@@ -121,8 +121,13 @@ class StatusBarManagerTest {
 
     @Test
     @DisplayName("Update zoom selects matching preset")
-    void testUpdateZoomSelectsMatchingPreset() {
+    void testUpdateZoomSelectsMatchingPreset() throws Exception {
         statusBarManager.updateZoom(1.0);
+        
+        // Wait for Platform.runLater to complete
+        java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+        javafx.application.Platform.runLater(latch::countDown);
+        latch.await();
         
         // Should select the 100% preset
         Pair<String, Double> selected = cmbZoomPresets.getSelectionModel().getSelectedItem();
@@ -132,10 +137,20 @@ class StatusBarManagerTest {
 
     @Test
     @DisplayName("Update zoom with non-preset value clears selection")
-    void testUpdateZoomWithNonPresetValue() {
+    void testUpdateZoomWithNonPresetValue() throws Exception {
         statusBarManager.updateZoom(1.0); // Select a preset first
         
+        // Wait for Platform.runLater to complete
+        java.util.concurrent.CountDownLatch latch1 = new java.util.concurrent.CountDownLatch(1);
+        javafx.application.Platform.runLater(latch1::countDown);
+        latch1.await();
+        
         statusBarManager.updateZoom(1.37); // Non-preset value
+        
+        // Wait for Platform.runLater to complete
+        java.util.concurrent.CountDownLatch latch2 = new java.util.concurrent.CountDownLatch(1);
+        javafx.application.Platform.runLater(latch2::countDown);
+        latch2.await();
         
         // Selection should be cleared
         assertNull(cmbZoomPresets.getSelectionModel().getSelectedItem());
@@ -186,7 +201,7 @@ class StatusBarManagerTest {
         statusBarManager.updateZoom(2.0);
         
         assertEquals("200 x 200 px", lblImageSize.getText());
-        assertEquals("Pos: (75, 75)", lblPosition.getText());
+        assertEquals(String.format("%15s", "(75, 75)"), lblPosition.getText());
         assertEquals("Mode: Another", lblMode.getText());
     }
 
@@ -198,7 +213,7 @@ class StatusBarManagerTest {
         statusBarManager.updateZoom(0.1);
         
         assertEquals("0 x 0 px", lblImageSize.getText());
-        assertEquals("Pos: (0, 0)", lblPosition.getText());
+        assertEquals(String.format("%15s", "(0, 0)"), lblPosition.getText());
     }
 
     @Test
@@ -215,34 +230,34 @@ class StatusBarManagerTest {
     @DisplayName("updateFileSize displays bytes for values < 1024")
     void testUpdateFileSizeBytes() {
         statusBarManager.updateFileSize(512);
-        assertEquals("512.00 bytes", lblFileSize.getText());
+        assertEquals(String.format("Size: %8s", "512.00 bytes"), lblFileSize.getText());
     }
 
     @Test
     @DisplayName("updateFileSize displays KB for values >= 1024 and < 1MB")
     void testUpdateFileSizeKilobytes() {
         statusBarManager.updateFileSize(1536); // 1.5 KB
-        assertEquals("1.50 KB", lblFileSize.getText());
+        assertEquals(String.format("Size: %8s", "1.50 KB"), lblFileSize.getText());
     }
 
     @Test
     @DisplayName("updateFileSize displays MB for values >= 1MB and < 1GB")
     void testUpdateFileSizeMegabytes() {
         statusBarManager.updateFileSize(1024L * 1024L); // 1 MB
-        assertEquals("1.00 MB", lblFileSize.getText());
+        assertEquals(String.format("Size: %8s", "1.00 MB"), lblFileSize.getText());
     }
 
     @Test
     @DisplayName("updateFileSize displays GB for values >= 1GB")
     void testUpdateFileSizeGigabytes() {
         statusBarManager.updateFileSize(1024L * 1024L * 1024L); // 1 GB
-        assertEquals("1.00 GB", lblFileSize.getText());
+        assertEquals(String.format("Size: %8s", "1.00 GB"), lblFileSize.getText());
     }
 
     @Test
     @DisplayName("updateFileSize handles zero correctly")
     void testUpdateFileSizeZero() {
         statusBarManager.updateFileSize(0);
-        assertEquals("0.00 bytes", lblFileSize.getText());
+        assertEquals(String.format("Size: %8s", "0.00 bytes"), lblFileSize.getText());
     }
 }

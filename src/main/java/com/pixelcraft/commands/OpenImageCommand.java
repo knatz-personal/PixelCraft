@@ -4,30 +4,28 @@ import java.io.File;
 import java.util.Optional;
 
 import com.pixelcraft.manager.FileManager;
+import com.pixelcraft.manager.UserPreferenceManager;
 import com.pixelcraft.model.RasterImage;
 
 import javafx.application.Platform;
 import javafx.scene.canvas.Canvas;
 import javafx.stage.FileChooser;
 
-public class OpenImageCommand implements ICommand {
+public class OpenImageCommand extends CommandBase {
 
-    private final FileManager fileManager;
     private final Canvas canvas;
+    private final UserPreferenceManager userPreferences;
 
     //#region Snapshot for Undo
-    private RasterImage snapshot;
     private File previousFile;
-    private double previousPositionX;
-    private double previousPositionY;
     private String lastDescription = "Open: ";
-    private static File lastDirectory; // Static to persist across command instances
     private File selectedFile; // Track the file opened for redo
     //#endregion
 
-    public OpenImageCommand(FileManager fileManager, Canvas canvas) {
-        this.fileManager = fileManager;
+    public OpenImageCommand(FileManager fileManager, Canvas canvas, UserPreferenceManager userPreferences) {
+        super(fileManager);
         this.canvas = canvas;
+        this.userPreferences = userPreferences;
     }
 
     @Override
@@ -79,7 +77,7 @@ public class OpenImageCommand implements ICommand {
                 boolean loaded = fileManager.loadImage(previousFile);
                 if (!loaded) {
                     // Fall back to snapshot if load failed
-                    restoreSnapshot(snapshot);
+                    restoreSnapshot();
                     return;
                 }
                 fileManager.getCurrentImage().ifPresent(img
@@ -88,7 +86,7 @@ public class OpenImageCommand implements ICommand {
                 lastDescription = "Undo open: restored " + previousFile.getName();
             } else {
                 // No previous file; restore snapshot
-                restoreSnapshot(snapshot);
+                restoreSnapshot();
                 lastDescription = "Undo open: restored in-memory image";
             }
         };
@@ -106,28 +104,7 @@ public class OpenImageCommand implements ICommand {
     }
 
     //#region Helpers
-    /**
-     * Restores a previously saved snapshot of a raster image.
-     * Creates a new image with the same dimensions as the snapshot and copies
-     * all pixel data from the snapshot to the new image. The restored image
-     * is positioned at the previously saved coordinates.
-     *
-     * @param snapshot The RasterImage snapshot to restore. If null, the method
-     *                 returns without performing any action.
-     */
-    private void restoreSnapshot(RasterImage snapshot) {
-        if (snapshot == null) {
-            return;
-        }
-        RasterImage target = fileManager.createNewImage(snapshot.getWidth(), snapshot.getHeight());
-        for (int y = 0; y < snapshot.getHeight(); y++) {
-            for (int x = 0; x < snapshot.getWidth(); x++) {
-                target.setPixel(x, y, snapshot.getPixel(x, y));
-            }
-        }
-        target.setPosition(previousPositionX, previousPositionY);
-    }
-
+    
     /**
      * Opens a file chooser dialog for the user to select an image file.
      * <p>
@@ -155,9 +132,9 @@ public class OpenImageCommand implements ICommand {
         fileChooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif")
         );
-        if (lastDirectory != null && lastDirectory.isDirectory()) {
-            fileChooser.setInitialDirectory(lastDirectory);
-        }
+        
+        // Use injected UserPreferences for last directory
+        userPreferences.getLastOpenDirectory().ifPresent(fileChooser::setInitialDirectory);
 
         var scene = canvas.getScene();
         if (scene == null || scene.getWindow() == null) {
@@ -171,7 +148,8 @@ public class OpenImageCommand implements ICommand {
             return; // User cancelled
         }
 
-        lastDirectory = tempSelectedFile.getParentFile();
+        // Persist the directory for future use
+        userPreferences.setLastOpenDirectory(tempSelectedFile.getParentFile());
         this.selectedFile = tempSelectedFile; // Store for redo
         loadSelectedFile(selectedFile);
     }

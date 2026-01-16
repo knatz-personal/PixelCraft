@@ -3,6 +3,7 @@ package com.pixelcraft.ui;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Optional;
 
 import javax.imageio.ImageIO;
@@ -28,13 +29,18 @@ import com.pixelcraft.util.ReflectionUtil;
 
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.Menu;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import javafx.util.Pair;
 
 /**
  * Integration tests for opening multiple images sequentially.
@@ -66,20 +72,50 @@ public class OpenImageIntegrationTest {
     public void start(Stage stage) throws Exception {
         this.stage = stage;
 
-        // Load the actual FXML
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/pixelcraft/main.fxml"));
-        BorderPane root = loader.load();
+        // Create controller and UI components manually (no FXML needed)
+        controller = new MainController();
+        
+        // Create all required FXML components
+        StackPane canvasContainer = new StackPane();
+        scrollPane = new ScrollPane();
+        scrollPane.setContent(canvasContainer);
+        
+        Label lblImageSize = new Label();
+        Label lblFileSize = new Label();
+        Label lblPosition = new Label();
+        Label lblMode = new Label();
+        Menu mnuRecents = new Menu();
+        ComboBox<Pair<String, Double>> cmbZoomPresets = new ComboBox<>();
+        ListView<Label> lstHistory = new ListView<>();
+        ListView<String> lstActivityLog = new ListView<>();
 
-        // Get the actual controller
-        controller = loader.getController();
+        // Inject FXML fields using reflection
+        ReflectionUtil.injectField(controller, "canvasContainer", canvasContainer);
+        ReflectionUtil.injectField(controller, "scrollPane", scrollPane);
+        ReflectionUtil.injectField(controller, "lblImageSize", lblImageSize);
+        ReflectionUtil.injectField(controller, "lblFileSize", lblFileSize);
+        ReflectionUtil.injectField(controller, "lblPosition", lblPosition);
+        ReflectionUtil.injectField(controller, "lblMode", lblMode);
+        ReflectionUtil.injectField(controller, "mnuRecents", mnuRecents);
+        ReflectionUtil.injectField(controller, "cmbZoomPresets", cmbZoomPresets);
+        ReflectionUtil.injectField(controller, "lstHistory", lstHistory);
+        ReflectionUtil.injectField(controller, "lstActivityLog", lstActivityLog);
 
-        // Use reflection to access private fields from MainController
-        scrollPane = ReflectionUtil.getPrivateField(controller, "scrollPane", ScrollPane.class);
-        canvas = ReflectionUtil.getPrivateField(controller, "canvas", Canvas.class);
+        // Call initialize method
+        Method initMethod = MainController.class.getDeclaredMethod("initialize");
+        initMethod.setAccessible(true);
+        initMethod.invoke(controller);
+
+        // Get the canvas that was created
+        canvas = (Canvas) canvasContainer.getChildren().get(0);
+        
+        // Get managers for testing
         fileManager = ReflectionUtil.getPrivateField(controller, "fileManager", FileManager.class);
         viewportManager = ReflectionUtil.getPrivateField(controller, "viewportManager", ViewportManager.class);
 
         // Set up the stage with smaller dimensions for headless testing
+        BorderPane root = new BorderPane();
+        root.setCenter(scrollPane);
         Scene scene = new Scene(root, Globals.DEFAULT_WIDTH, Globals.DEFAULT_HEIGHT);
         stage.setScene(scene);
         stage.show();

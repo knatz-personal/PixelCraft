@@ -3,20 +3,20 @@ package com.pixelcraft.commands;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import javafx.geometry.Bounds;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.ScrollPane;
 
 public class ZoomFitToViewportCommand implements ICommand {
 
     private final ZoomSetCommand zoomSetCommand;
     private final double targetZoom;
 
-    public ZoomFitToViewportCommand(ScrollPane scrollPane, Canvas canvas,
+    public ZoomFitToViewportCommand(Bounds viewportBounds, Canvas canvas,
             Supplier<Double> zoomLevelGetter, Consumer<Double> zoomLevelSetter,
             Runnable updateStatusBar) {
 
-        double viewportWidth = scrollPane.getViewportBounds().getWidth();
-        double viewportHeight = scrollPane.getViewportBounds().getHeight();
+        double viewportWidth = viewportBounds.getWidth();
+        double viewportHeight = viewportBounds.getHeight();
         
         // Get current zoom to calculate actual image dimensions
         double currentZoom = zoomLevelGetter.get();
@@ -29,7 +29,7 @@ public class ZoomFitToViewportCommand implements ICommand {
 
         targetZoom = Math.min(xZoom, yZoom) * 0.98; // Add 2% padding
 
-        this.zoomSetCommand = new ZoomSetCommand(scrollPane, canvas, zoomLevelGetter, zoomLevelSetter, updateStatusBar, targetZoom);
+        this.zoomSetCommand = new ZoomSetCommand(canvas, zoomLevelGetter, zoomLevelSetter, updateStatusBar, targetZoom);
     }
 
     @Override

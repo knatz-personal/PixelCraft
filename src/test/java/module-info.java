@@ -9,6 +9,12 @@ open module com.pixelcraft {
     requires java.prefs;
     requires javafx.base;
     
+    // Test dependencies
+    requires org.junit.jupiter.api;
+    requires org.testfx;
+    requires org.testfx.junit5;
+    requires org.mockito;
+    
     // 'open module' automatically opens all packages to all modules
     // No need for explicit 'opens' statements
     

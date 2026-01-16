@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.pixelcraft.builders.RecentsMenuBuilder;
 import com.pixelcraft.commands.CommandHistory;
+import com.pixelcraft.commands.CropCommand;
 import com.pixelcraft.commands.ICommand;
 import com.pixelcraft.commands.NewImageCommand;
 import com.pixelcraft.commands.OpenImageCommand;
@@ -22,10 +23,14 @@ import com.pixelcraft.manager.HistoryDisplayManager;
 import com.pixelcraft.manager.KeyboardShortcutManager;
 import com.pixelcraft.manager.RecentFilesManager;
 import com.pixelcraft.manager.StatusBarManager;
+import com.pixelcraft.manager.ToolManager;
+import com.pixelcraft.manager.UserPreferenceManager;
 import com.pixelcraft.manager.ViewportManager;
 import com.pixelcraft.model.RasterImage;
+import com.pixelcraft.tools.SelectionTool;
 import com.pixelcraft.util.Globals;
 import com.pixelcraft.util.IconUtil;
+import com.pixelcraft.util.ToolNames;
 import com.pixelcraft.util.logging.Logger;
 import com.pixelcraft.util.logging.ObservableListLogTarget;
 import com.pixelcraft.util.logging.eLogLevel;
@@ -45,10 +50,15 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SingleSelectionModel;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.Tooltip;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -77,30 +87,57 @@ public class MainController {
     private ListView<Label> lstHistory;
     @FXML
     private ListView<String> lstActivityLog;
+    @FXML
+    private ToggleButton tbSelect;
+    @FXML
+    private ToggleButton tbCrop;
+    @FXML
+    private ToggleButton tbPencil;
+    @FXML
+    private ToggleButton tbEraser;
+    @FXML
+    private ToggleButton tbPicker;
+    @FXML
+    private ToggleButton tbFill;
+    @FXML
+    private ToggleButton tbLine;
+    @FXML
+    private ToggleButton tbEllipse;
+    @FXML
+    private ToggleButton tbClone;
     //#endregion
 
     private Canvas canvas;
+    private Canvas overlayCanvas;
     private boolean keyboardShortcutsSetup = false;
     private boolean isApplyingZoom = false;
+
+    //#region Tools
+    private SelectionTool selectionTool;
+    //#endregion
 
     //#region Managers
     private final CommandHistory commandHistory = new CommandHistory();
     private final RecentFilesManager recentsManager = new RecentFilesManager();
+    private final UserPreferenceManager userPreferences = new UserPreferenceManager();
     private final PauseTransition zoomDebouncer = new PauseTransition(Duration.millis(100));
     private CanvasManager canvasManager;
     private ViewportManager viewportManager;
     private FileManager fileManager;
     private StatusBarManager statusBarManager;
     private HistoryDisplayManager historyManager;
+    private ToolManager toolManager;
     //#endregion
 
     //#region FXML events
     @FXML
-    @SuppressWarnings("unused")
     public void initialize() {
         // Load icon font
         IconUtil.loadIconFont();
-        
+
+        // Setup toolbar button icons with flat design
+        setupToolbarIcons();
+
         // init and bind canvas to scroll pane
         canvas = new Canvas(Globals.DEFAULT_WIDTH, Globals.DEFAULT_HEIGHT);
 
@@ -108,19 +145,31 @@ public class MainController {
         canvasContainer.setAlignment(Pos.CENTER);
         // Initialize logger with ObservableList target for activity log
         Logger.getLogger(MainController.class)
-            .addTarget(new ObservableListLogTarget(lstActivityLog.getItems(), eLogLevel.INFO, 5_000_000, true));
-        
+                .addTarget(new ObservableListLogTarget(lstActivityLog.getItems(), eLogLevel.INFO, 5_000_000, true));
+
         // Workaround for JavaFX bug: clicking empty ListView causes IndexOutOfBoundsException
         lstActivityLog.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, event -> {
             if (lstActivityLog.getItems().isEmpty()) {
                 event.consume();
             }
         });
-        
+
         canvasContainer.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
         canvasContainer.setPrefSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE);
         canvasContainer.setStyle("-fx-background-color: transparent;");
         canvasContainer.getChildren().add(canvas);
+
+        // Make canvas focusable for keyboard events
+        canvas.setFocusTraversable(true);
+        canvas.setOnMouseClicked(e -> canvas.requestFocus());
+
+        //Overlay Canvas
+        overlayCanvas = new Canvas(Globals.DEFAULT_WIDTH, Globals.DEFAULT_HEIGHT);
+        overlayCanvas.setMouseTransparent(true);
+        canvasContainer.getChildren().add(overlayCanvas);
+        // Bind overlay size to main canvas
+        overlayCanvas.widthProperty().bind(canvas.widthProperty());
+        overlayCanvas.heightProperty().bind(canvas.heightProperty());
 
         // init managers 
         canvasManager = new CanvasManager(canvas);
@@ -128,6 +177,7 @@ public class MainController {
         fileManager = new FileManager();
         statusBarManager = new StatusBarManager(lblImageSize, lblFileSize, lblPosition, lblMode, cmbZoomPresets);
         historyManager = new HistoryDisplayManager(lstHistory, commandHistory);
+        toolManager = new ToolManager();
 
         // init listeners 
         setupFileListener();
@@ -145,10 +195,20 @@ public class MainController {
                 setupKeyboardShortcuts(scene);
             }
         });
+        canvas.setCursor(toolManager.getCurrentCursor());
+
+        // Tools
+        selectionTool = new SelectionTool(
+                overlayCanvas,
+                () -> fileManager.getCurrentImage().map(RasterImage::getWidth).orElse(0),
+                () -> fileManager.getCurrentImage().map(RasterImage::getHeight).orElse(0),
+                viewportManager::getZoomLevel
+        );
+        toolManager.registerTool(ToolNames.SELECT, selectionTool);
+        toolManager.setActiveTool(null);
     }
 
     @FXML
-    @SuppressWarnings("unused")
     public void onNewImage(ActionEvent event) {
         //TODO: Show dialog to get image dimensions
         ICommand cmd = new NewImageCommand(fileManager, Globals.DEFAULT_WIDTH, Globals.DEFAULT_HEIGHT);
@@ -156,21 +216,18 @@ public class MainController {
     }
 
     @FXML
-    @SuppressWarnings("unused")
     public void onOpenImage(ActionEvent event) {
-        ICommand cmd = new OpenImageCommand(fileManager, canvas);
+        ICommand cmd = new OpenImageCommand(fileManager, canvas, userPreferences);
         executeCommand(cmd);
     }
 
     @FXML
-    @SuppressWarnings("unused")
     public void onSaveImage(ActionEvent event) {
         //TODO: Implement saving the current canvas image to the opened file
         fileManager.save();
     }
 
     @FXML
-    @SuppressWarnings("unused")
     public void onSaveAsImage(ActionEvent event) {
         //TODO: Implement saving the current canvas image to a new file
         FileChooser fileChooser = new FileChooser();
@@ -186,7 +243,6 @@ public class MainController {
     }
 
     @FXML
-    @SuppressWarnings("unused")
     public void onRecents(ActionEvent event) {
         buildRecentsMenu();
     }
@@ -206,7 +262,6 @@ public class MainController {
     @FXML
     public void onZoomIn(ActionEvent event) {
         ICommand cmd = new ZoomInCommand(
-                scrollPane,
                 canvas,
                 viewportManager::getZoomLevel,
                 viewportManager::setZoom,
@@ -218,7 +273,6 @@ public class MainController {
     @FXML
     public void onZoomOut(ActionEvent event) {
         ICommand cmd = new ZoomOutCommand(
-                scrollPane,
                 canvas,
                 viewportManager::getZoomLevel,
                 viewportManager::setZoom,
@@ -230,7 +284,6 @@ public class MainController {
     @FXML
     public void onZoomReset(ActionEvent event) {
         ICommand cmd = new ZoomResetCommand(
-                scrollPane,
                 canvas,
                 viewportManager::getZoomLevel,
                 viewportManager::setZoom,
@@ -242,7 +295,7 @@ public class MainController {
     @FXML
     public void onZoomFitWindow(ActionEvent event) {
         ICommand cmd = new ZoomFitToViewportCommand(
-                scrollPane,
+                scrollPane.getViewportBounds(),
                 canvas,
                 viewportManager::getZoomLevel,
                 viewportManager::setZoom,
@@ -252,7 +305,30 @@ public class MainController {
     }
 
     @FXML
-    @SuppressWarnings("unused")
+    public void onToggleSelect(ActionEvent event) {
+        String activeToolName = toolManager.getActiveToolName();
+        if (ToolNames.SELECT.equals(activeToolName)) {
+            toolManager.setActiveTool(null);
+        } else {
+            toolManager.setActiveTool(ToolNames.SELECT);
+        }
+    }
+
+    @FXML
+    public void onCrop(ActionEvent event) {
+        if (selectionTool == null) {
+            return;
+        }
+        Rectangle bounds = selectionTool.getSelectionBounds();
+        if (bounds == null) {
+            return;
+        }
+        ICommand cmd = new CropCommand(fileManager, bounds);
+        executeCommand(cmd);
+        selectionTool.clearSelection();
+    }
+
+    @FXML
     public void onZoomPresetSelected() {
         SingleSelectionModel<Pair<String, Double>> selectionModel = cmbZoomPresets.getSelectionModel();
         if (selectionModel == null) {
@@ -264,7 +340,6 @@ public class MainController {
         }
         double zoomValue = selected.getValue();
         ICommand cmd = new ZoomSetCommand(
-                scrollPane,
                 canvas,
                 viewportManager::getZoomLevel,
                 viewportManager::setZoom,
@@ -275,7 +350,6 @@ public class MainController {
     }
 
     @FXML
-    @SuppressWarnings("unused")
     public void onExit(ActionEvent event) {
         Stage stage = (Stage) canvas.getScene().getWindow();
 
@@ -288,7 +362,6 @@ public class MainController {
     }
 
     @FXML
-    @SuppressWarnings("unused")
     public void onGenericClick(ActionEvent event) {
         // Placeholder for generic actions
     }
@@ -321,32 +394,34 @@ public class MainController {
         // 1. Window resize (should trigger zoomToFit for initial fit)
         // 2. Canvas content resize due to zoom (should NOT trigger zoomToFit)
         final double[] lastViewportSize = {0, 0};
-        
+
         scrollPane.viewportBoundsProperty().addListener((obs, oldB, newB) -> {
             // Skip if we're already applying zoom (prevents re-entrancy)
             if (isApplyingZoom) {
                 return;
             }
-            
-            if (newB == null) return;
-            
+
+            if (newB == null) {
+                return;
+            }
+
             double newWidth = newB.getWidth();
             double newHeight = newB.getHeight();
-            
+
             // Only react when the actual viewport (window) dimensions change significantly
             // This happens on window resize, NOT on canvas content changes
             final double EPS = 5.0; // Need larger epsilon to ignore minor layout adjustments
             boolean viewportSizeChanged = Math.abs(newWidth - lastViewportSize[0]) > EPS
                     || Math.abs(newHeight - lastViewportSize[1]) > EPS;
-            
+
             if (!viewportSizeChanged) {
                 return;
             }
-            
+
             // Update tracked viewport size
             lastViewportSize[0] = newWidth;
             lastViewportSize[1] = newHeight;
-            
+
             // Don't auto-fit on every resize - only on initial load
             // User manual zoom should be preserved
         });
@@ -361,6 +436,8 @@ public class MainController {
         canvas.setOnMousePressed(this::handleMousePressed);
         canvas.setOnMouseDragged(this::handleMouseDragged);
         canvas.setOnMouseReleased(this::handleMouseReleased);
+        canvas.setOnKeyPressed(this::handleKeyPressed);
+        canvas.setOnKeyReleased(this::handleKeyReleased);
         canvas.setOnMouseExited(e -> statusBarManager.clearPosition());
     }
 
@@ -374,7 +451,7 @@ public class MainController {
                         statusBarManager.updateFileSize(file.length());
                     }
                 });
-                
+
                 image.ifPresent(img -> {
                     // Fit to viewport and render immediately
                     viewportManager.zoomToFit(img.getWidth(), img.getHeight());
@@ -406,13 +483,13 @@ public class MainController {
         if (!event.isControlDown()) {
             return; // Let ScrollPane handle normal scrolling (panning)
         }
-        
+
         // Ctrl+Scroll is always for zooming - consume event to prevent scrolling
         event.consume();
 
         double currentZoom = viewportManager.getZoomLevel();
         boolean zoomingIn = event.getDeltaY() > 0;
-        
+
         // Check if we're at a limit and trying to zoom further in that direction
         if (zoomingIn && currentZoom >= Globals.MAX_ZOOM) {
             return; // Already at max zoom, can't zoom in further
@@ -425,7 +502,7 @@ public class MainController {
         double newZoom = currentZoom * delta;
 
         ICommand cmd = new ZoomSetCommand(
-                scrollPane, canvas,
+                canvas,
                 viewportManager::getZoomLevel,
                 viewportManager::setZoom,
                 this::updateStatusBar,
@@ -446,7 +523,9 @@ public class MainController {
             viewportManager.startPan(event.getScreenX(), event.getScreenY());
             canvas.setCursor(Cursor.CLOSED_HAND);
             event.consume();
+            return;
         }
+        toolManager.handleMousePressed(event);
     }
 
     private void handleMouseDragged(MouseEvent event) {
@@ -455,7 +534,9 @@ public class MainController {
             viewportManager.updatePan(event.getScreenX(), event.getScreenY());
             handleMouseMove(event);
             event.consume();
+            return;
         }
+        toolManager.handleMouseDragged(event);
     }
 
     private void handleMouseReleased(MouseEvent event) {
@@ -463,6 +544,23 @@ public class MainController {
             viewportManager.endPan();
             canvas.setCursor(Cursor.DEFAULT);
             event.consume();
+            return;
+        }
+        toolManager.handleMouseReleased(event);
+    }
+
+    private void handleKeyPressed(KeyEvent event) {
+        if (event.getCode() == KeyCode.SHIFT && selectionTool != null) {
+            selectionTool.setConstrainToSquare(true);
+        }
+        if (event.getCode() == KeyCode.ESCAPE && selectionTool != null) {
+            selectionTool.clearSelection();
+        }
+    }
+
+    private void handleKeyReleased(KeyEvent event) {
+        if (event.getCode() == KeyCode.SHIFT && selectionTool != null) {
+            selectionTool.setConstrainToSquare(false);
         }
     }
     //#endregion
@@ -498,7 +596,7 @@ public class MainController {
             return;
         }
         isApplyingZoom = true;
-        
+
         try {
             fileManager.getCurrentImage().ifPresent(img -> {
                 // Validate image is valid
@@ -514,11 +612,11 @@ public class MainController {
                 double imageWidth = img.getWidth();
                 double imageHeight = img.getHeight();
                 statusBarManager.updateImageSize(imageWidth, imageHeight);
-                
+
                 // Calculate the scaled canvas size
                 double scaledWidth = imageWidth * zoomLevel;
                 double scaledHeight = imageHeight * zoomLevel;
-                
+
                 // CRITICAL: Clamp the canvas size to prevent GPU texture overflow
                 // JavaFX Canvas allocates a GPU texture matching its size - too big = NPE
                 double maxCanvasSize = Math.min(Globals.MAX_TEXTURE_SIZE, 4096.0); // Conservative limit
@@ -537,7 +635,7 @@ public class MainController {
                     // Clear the canvas BEFORE resizing to prevent flicker
                     // (old content getting stretched to new size)
                     canvas.getGraphicsContext2D().clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-                    
+
                     // Set canvas to the scaled size (clamped)
                     canvas.setWidth(scaledWidth);
                     canvas.setHeight(scaledHeight);
@@ -559,6 +657,82 @@ public class MainController {
         scrollPane.setVvalue(0.5);
     }
 
+    private void setupToolbarIcons() {
+        // Configure toolbar buttons with icons and flat styling
+        configureToolButton(tbSelect, "arrow_selector_tool", "Selection Tool");
+        configureToolButton(tbCrop, "picture", "Crop Tool");
+        configureToolButton(tbPencil, "pencil", "Pencil Tool");
+        configureToolButton(tbEraser, "cross", "Eraser Tool");
+        configureToolButton(tbPicker, "eye", "Color Picker");
+        configureToolButton(tbFill, "image", "Fill Tool");
+        configureToolButton(tbLine, "menu", "Line Tool");
+        configureToolButton(tbEllipse, "bookmark", "Ellipse Tool");
+        configureToolButton(tbClone, "file-add", "Clone Tool");
+    }
+
+    private void configureToolButton(ToggleButton button, String iconName, String tooltip) {
+        if (button == null) return;
+        
+        // Create icon with 20px size
+        Label icon = IconUtil.createIconByName(iconName, 20.0);
+        button.setGraphic(icon);
+        button.setText(""); // Remove text, show only icon
+        
+        // Apply flat styling
+        button.setStyle(
+            "-fx-background-color: transparent;" +
+            "-fx-background-radius: 4px;" +
+            "-fx-border-width: 0;" +
+            "-fx-padding: 8px;"
+        );
+        
+        // Hover and selected states
+        button.setOnMouseEntered(e -> {
+            if (!button.isSelected()) {
+                button.setStyle(
+                    "-fx-background-color: rgba(0, 0, 0, 0.05);" +
+                    "-fx-background-radius: 4px;" +
+                    "-fx-border-width: 0;" +
+                    "-fx-padding: 8px;"
+                );
+            }
+        });
+        
+        button.setOnMouseExited(e -> {
+            if (!button.isSelected()) {
+                button.setStyle(
+                    "-fx-background-color: transparent;" +
+                    "-fx-background-radius: 4px;" +
+                    "-fx-border-width: 0;" +
+                    "-fx-padding: 8px;"
+                );
+            }
+        });
+        
+        button.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+            if (isSelected) {
+                button.setStyle(
+                    "-fx-background-color: rgba(0, 120, 215, 0.1);" +
+                    "-fx-background-radius: 4px;" +
+                    "-fx-border-color: #0078d7;" +
+                    "-fx-border-width: 1px;" +
+                    "-fx-padding: 7px;" // Adjust for border
+                );
+            } else {
+                button.setStyle(
+                    "-fx-background-color: transparent;" +
+                    "-fx-background-radius: 4px;" +
+                    "-fx-border-width: 0;" +
+                    "-fx-padding: 8px;"
+                );
+            }
+        });
+        
+        // Set tooltip
+        Tooltip tt = new Tooltip(tooltip);
+        button.setTooltip(tt);
+    }
+
     private void setupRecentsMenu() {
         recentsManager.load();
         recentsManager.getRecents().addListener(
@@ -576,5 +750,12 @@ public class MainController {
         KeyboardShortcutManager.setup(scene, this);
     }
 
+    private void clearOverlay() {
+        if (overlayCanvas != null) {
+            overlayCanvas.getGraphicsContext2D().clearRect(
+                    0, 0, overlayCanvas.getWidth(), overlayCanvas.getHeight()
+            );
+        }
+    }
     //#endregion
 }

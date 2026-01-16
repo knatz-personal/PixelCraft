@@ -2,8 +2,6 @@
 package com.pixelcraft.manager;
 
 import com.pixelcraft.model.RasterImage;
-import com.pixelcraft.util.logging.Logger;
-import com.pixelcraft.util.logging.LoggerFactory;
 
 import javafx.application.Platform;
 import javafx.scene.canvas.Canvas;
@@ -11,16 +9,14 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.ImagePattern;
 
 public class CanvasManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CanvasManager.class);
     private static final double CHECKER_CELL_SIZE = 10.0;
     
     private final Canvas canvas;
     private final GraphicsContext gc;
-    private ImagePattern checkerPattern;
+    //private ImagePattern checkerPattern;
 
     public CanvasManager(Canvas canvas) {
         this.canvas = canvas;
@@ -51,8 +47,6 @@ public class CanvasManager {
                 writer.setArgb(x, y, color);
             }
         }
-        
-        checkerPattern = new ImagePattern(tile, 0, 0, tileSize, tileSize, false);
     }
 
     private boolean isRenderable() {

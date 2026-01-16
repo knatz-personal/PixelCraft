@@ -4,15 +4,14 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.ScrollPane;
 
-public class ZoomResetCommand implements ICommand {
+public class ZoomResetCommand extends CommandBase {
     private final ZoomSetCommand zoomSetCommand;
 
-    public ZoomResetCommand(ScrollPane scrollPane, Canvas canvas,
+    public ZoomResetCommand(Canvas canvas,
                             Supplier<Double> zoomLevelGetter, Consumer<Double> zoomLevelSetter,
                             Runnable updateStatusBar) {
-        this.zoomSetCommand = new ZoomSetCommand(scrollPane, canvas,
+        this.zoomSetCommand = new ZoomSetCommand(canvas,
                 zoomLevelGetter, zoomLevelSetter,
                 updateStatusBar, 1.0);
     }

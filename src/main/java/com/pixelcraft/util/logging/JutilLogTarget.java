@@ -7,7 +7,8 @@ import java.util.logging.Level;
  * Useful for integrating with existing JUL-based logging infrastructure.
  */
 public class JutilLogTarget implements ILogTarget {
-    private final java.util.logging.Logger jutilLogger;
+    @SuppressWarnings("NonConstantLogger")
+    private static java.util.logging.Logger jutilLogger = null;
     private final eLogLevel minLevel;
 
     public JutilLogTarget(String loggerName) {
@@ -15,7 +16,7 @@ public class JutilLogTarget implements ILogTarget {
     }
 
     public JutilLogTarget(String loggerName, eLogLevel minLevel) {
-        this.jutilLogger = java.util.logging.Logger.getLogger(loggerName);
+        jutilLogger = java.util.logging.Logger.getLogger(loggerName);
         this.minLevel = minLevel;
     }
 
@@ -73,9 +74,5 @@ public class JutilLogTarget implements ILogTarget {
             case FATAL -> Level.SEVERE;
             default -> Level.INFO;
         };
-    }
-
-    public java.util.logging.Logger getJutilLogger() {
-        return jutilLogger;
     }
 }

@@ -54,10 +54,10 @@
             </Menu>
             <Menu text="Image">
               <items>
+                <MenuItem fx:id="miCrop" onAction="#onCrop" text="Crop" />
                 <MenuItem onAction="#onGenericClick" text="Rotate" />
-                <MenuItem onAction="#onGenericClick" text="Flip" />
-                <MenuItem onAction="#onGenericClick" text="Crop" />
                 <MenuItem onAction="#onGenericClick" text="Resize" />
+                <MenuItem onAction="#onGenericClick" text="Flip" />
                 <MenuItem onAction="#onGenericClick" text="Skew" />
               </items>
             </Menu>
@@ -115,52 +115,49 @@
   <center>
     <SplitPane dividerPositions="0.2, 0.8" BorderPane.alignment="CENTER">
       <items>
-        <ScrollPane fitToHeight="true" fitToWidth="true" maxWidth="220.0" minWidth="220.0">
+        <ScrollPane fitToHeight="true" fitToWidth="true" maxWidth="64.0" minWidth="64.0">
           <content>
-            <!--
-            <VBox prefWidth="180.0" spacing="8.0">
-              <padding>
-                <Insets top="8.0" right="8.0" bottom="8.0" left="8.0"/>
-              </padding>
-              <Label text="TOOLBOX" style="-fx-font-weight: bold;"/>
-              <VBox spacing="4.0">
-                <ToggleButton text="Pencil"/>
-                <ToggleButton text="Eraser"/>
-                <ToggleButton text="Picker"/>
-                <ToggleButton text="Fill"/>
-                <ToggleButton text="Line"/>
-                <ToggleButton text="ect"/>
-                <ToggleButton text="Ellipse"/>
-                <ToggleButton text="Select"/>
-                <ToggleButton text="Clone"/>
-              </VBox>
-              <Separator/>
-              <Label text="Size:"/>
-              <HBox spacing="6.0">
-                <Slider min="1" max="100" value="12"/>
-                <Label text="12 px"/>
-              </HBox>
-              <Label text="Opacity:"/>
-              <HBox spacing="6.0">
-                <Slider min="0" max="100" value="100"/>
-                <Label text="100%"/>
-              </HBox>
-              <Separator/>
-              <Label text="Foreground/Background"/>
-              <HBox spacing="8.0">
-                <Rectangle width="24" height="24" style="-fx-fill: black; -fx-stroke: gray;"/>
-                <Rectangle width="24" height="24" style="-fx-fill: white; -fx-stroke: gray;"/>
-                <Button text="Swap ↔"/>
-              </HBox>
-              <Separator/>
-              <Label text="Recent Colors:"/>
-              <GridPane hgap="4" vgap="4">                
-                <Rectangle GridPane.columnIndex="0" GridPane.rowIndex="0" width="18" height="18" style="-fx-fill: #000000; -fx-stroke: gray;"/>
-                <Rectangle GridPane.columnIndex="1" GridPane.rowIndex="0" width="18" height="18" style="-fx-fill: #777777; -fx-stroke: gray;"/>
-                <Rectangle GridPane.columnIndex="2" GridPane.rowIndex="0" width="18" height="18" style="-fx-fill: #ffffff; -fx-stroke: gray;"/>
-              </GridPane>
-            </VBox>
-            -->
+            <Accordion maxWidth="64.0" minWidth="64.0" prefWidth="64.0">
+              <panes>
+                <TitledPane animated="false" text="Tools">
+                  <content>
+                    <VBox spacing="4.0">
+                       <children>
+                        <ToggleButton  fx:id="tbSelect" alignment="CENTER"  maxWidth="48.0" minWidth="48.0" wrapText="true" onAction="#onToggleSelect" text="Select" />
+                         <ToggleButton fx:id="tbCrop" alignment="CENTER"    maxWidth="48.0" minWidth="48.0" wrapText="true" onAction="#onCrop" text="Crop" />
+                         <ToggleButton fx:id="tbPencil" alignment="CENTER"  maxWidth="48.0" minWidth="48.0" wrapText="true" text="Pencil" />
+                         <ToggleButton fx:id="tbEraser" alignment="CENTER"  maxWidth="48.0" minWidth="48.0" wrapText="true" text="Eraser" />
+                         <ToggleButton fx:id="tbPicker" alignment="CENTER"  maxWidth="48.0" minWidth="48.0" wrapText="true" text="Picker" />
+                         <ToggleButton fx:id="tbFill" alignment="CENTER"    maxWidth="48.0" minWidth="48.0" wrapText="true" text="Fill" />
+                         <ToggleButton fx:id="tbLine" alignment="CENTER"    maxWidth="48.0" minWidth="48.0" wrapText="true" text="Line" />
+                         <ToggleButton fx:id="tbEllipse" alignment="CENTER" maxWidth="48.0" minWidth="48.0" wrapText="true" text="Ellipse" />
+                         <ToggleButton fx:id="tbClone" alignment="CENTER"   maxWidth="48.0" minWidth="48.0" wrapText="true" text="Clone" />
+                       </children>
+                    </VBox>
+                  </content>
+                </TitledPane>
+                <TitledPane animated="false" text="Size">
+                  <content>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="64.0" />
+                  </content>
+                </TitledPane>
+                <TitledPane animated="false" text="Opacity">
+                  <content>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="64.0" />
+                  </content>
+                </TitledPane>
+                <TitledPane animated="false" text="Foreground/Background">
+                  <content>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="64.0" />
+                  </content>
+                </TitledPane>
+                <TitledPane animated="false" text="Colors">
+                  <content>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="64.0" />
+                  </content>
+                </TitledPane>
+              </panes>
+            </Accordion>
           </content>
         </ScrollPane>
         <ScrollPane fx:id="scrollPane" fitToHeight="true" fitToWidth="true">
@@ -197,7 +194,7 @@
       <children>
         <Label fx:id="lblImageSize" text="0 x 0 px" textAlignment="RIGHT" />
         <Separator orientation="VERTICAL" />
-        <Label fx:id="lblFileSize" text=" Size: 0" />
+        <Label fx:id="lblFileSize" text="" />
         <Separator orientation="VERTICAL" />
         <ComboBox fx:id="cmbZoomPresets" onAction="#onZoomPresetSelected" prefWidth="100.0" promptText="100%">
         </ComboBox>

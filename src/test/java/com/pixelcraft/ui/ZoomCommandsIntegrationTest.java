@@ -1,5 +1,7 @@
 package com.pixelcraft.ui;
 
+import java.lang.reflect.Method;
+
 import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -16,16 +18,21 @@ import com.pixelcraft.util.Globals;
 import com.pixelcraft.util.ReflectionUtil;
 
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.Menu;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import javafx.util.Pair;
 
 /**
  * Integration tests for Zoom Commands using the actual MainController UI Tests
- * the zoom functionality with real FXML-loaded components
+ * the zoom functionality with manually created components (no FXML needed)
  *
  * @author Nathan Khupe
  */
@@ -53,16 +60,42 @@ public class ZoomCommandsIntegrationTest {
     public void start(Stage stage) throws Exception {
         this.stage = stage;
 
-        // Load the actual FXML
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/pixelcraft/main.fxml"));
-        BorderPane root = loader.load();
+        // Create controller and UI components manually (no FXML needed)
+        controller = new MainController();
+        
+        // Create all required FXML components
+        StackPane canvasContainer = new StackPane();
+        scrollPane = new ScrollPane();
+        scrollPane.setContent(canvasContainer);
+        
+        Label lblImageSize = new Label();
+        Label lblFileSize = new Label();
+        Label lblPosition = new Label();
+        Label lblMode = new Label();
+        Menu mnuRecents = new Menu();
+        ComboBox<Pair<String, Double>> cmbZoomPresets = new ComboBox<>();
+        ListView<Label> lstHistory = new ListView<>();
+        ListView<String> lstActivityLog = new ListView<>();
 
-        // Get the actual controller
-        controller = loader.getController();
+        // Inject FXML fields using reflection
+        ReflectionUtil.injectField(controller, "canvasContainer", canvasContainer);
+        ReflectionUtil.injectField(controller, "scrollPane", scrollPane);
+        ReflectionUtil.injectField(controller, "lblImageSize", lblImageSize);
+        ReflectionUtil.injectField(controller, "lblFileSize", lblFileSize);
+        ReflectionUtil.injectField(controller, "lblPosition", lblPosition);
+        ReflectionUtil.injectField(controller, "lblMode", lblMode);
+        ReflectionUtil.injectField(controller, "mnuRecents", mnuRecents);
+        ReflectionUtil.injectField(controller, "cmbZoomPresets", cmbZoomPresets);
+        ReflectionUtil.injectField(controller, "lstHistory", lstHistory);
+        ReflectionUtil.injectField(controller, "lstActivityLog", lstActivityLog);
 
-        // Use reflection to access private fields from MainController
-        scrollPane = ReflectionUtil.getPrivateField(controller, "scrollPane", ScrollPane.class);
-        canvas = ReflectionUtil.getPrivateField(controller, "canvas", Canvas.class);
+        // Call initialize method
+        Method initMethod = MainController.class.getDeclaredMethod("initialize");
+        initMethod.setAccessible(true);
+        initMethod.invoke(controller);
+
+        // Get the canvas that was created
+        canvas = (Canvas) canvasContainer.getChildren().get(0);
 
         // Load a sample image for realistic testing - rotates through different images
         // to test zoom behavior with various image dimensions
@@ -95,6 +128,8 @@ public class ZoomCommandsIntegrationTest {
         fileManager.loadImage(tempFile);
 
         // Set up the stage with smaller dimensions for headless testing
+        BorderPane root = new BorderPane();
+        root.setCenter(scrollPane);
         Scene scene = new Scene(root, Globals.DEFAULT_WIDTH, Globals.DEFAULT_HEIGHT);
         stage.setScene(scene);
         stage.centerOnScreen();
@@ -123,13 +158,11 @@ public class ZoomCommandsIntegrationTest {
         // Arrange
         com.pixelcraft.manager.ViewportManager viewportManager = ReflectionUtil.getPrivateField(controller, "viewportManager", com.pixelcraft.manager.ViewportManager.class);
 
-        // Act - Zoom in
+        // Act - Zoom in via controller method (no FXML menu in test setup)
         robot.interact(() -> {
+            controller.onZoomIn(null);
         });
-        robot.moveTo("View").clickOn();
-        robot.sleep(200);
-        robot.moveTo("Zoom In").clickOn();
-        robot.sleep(100);
+        robot.sleep(300);
 
         // Assert
         double currentZoom = viewportManager.getZoomLevel();

@@ -6,16 +6,15 @@ import java.util.function.Supplier;
 import com.pixelcraft.util.Globals;
 
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.ScrollPane;
 
-
-public class ZoomInCommand implements ICommand {
+public class ZoomInCommand extends CommandBase {
     private final ZoomSetCommand zoomSetCommand;
     private final double targetZoom;
 
-    public ZoomInCommand(ScrollPane scrollPane, Canvas canvas, Supplier<Double> zoomLevelGetter, Consumer<Double> zoomLevelSetter, Runnable updateStatusBar) {
+    public ZoomInCommand(Canvas canvas, 
+        Supplier<Double> zoomLevelGetter, Consumer<Double> zoomLevelSetter, Runnable updateStatusBar) {
         targetZoom = zoomLevelGetter.get() * Globals.ZOOM_STEP;
-        this.zoomSetCommand = new ZoomSetCommand(scrollPane, canvas, zoomLevelGetter, zoomLevelSetter, updateStatusBar, targetZoom);
+        this.zoomSetCommand = new ZoomSetCommand(canvas, zoomLevelGetter, zoomLevelSetter, updateStatusBar, targetZoom);
     }
 
     @Override

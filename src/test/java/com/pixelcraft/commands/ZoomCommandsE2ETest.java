@@ -3,6 +3,9 @@ package com.pixelcraft.commands;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,8 +16,6 @@ import com.pixelcraft.util.Globals;
 
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.ScrollPane;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * End-to-End tests for Zoom Commands
@@ -58,7 +59,7 @@ class ZoomCommandsE2ETest {
         // Arrange
         double initialZoom = zoomLevel.get();
         ZoomInCommand command = new ZoomInCommand(
-                scrollPane, canvas,
+                canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback()
         );
@@ -79,7 +80,7 @@ class ZoomCommandsE2ETest {
     void testZoomInCommandMaxLimit() {
         // Arrange
         zoomLevel.set(Globals.MAX_ZOOM / Globals.ZOOM_STEP); // Set close to max
-        ZoomInCommand command = new ZoomInCommand(scrollPane, canvas,
+        ZoomInCommand command = new ZoomInCommand(canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback()
         );
@@ -98,7 +99,7 @@ class ZoomCommandsE2ETest {
         // Arrange
         zoomLevel.set(2.0); // Start at 200%
         double initialZoom = zoomLevel.get();
-        ZoomOutCommand command = new ZoomOutCommand(scrollPane, canvas,
+        ZoomOutCommand command = new ZoomOutCommand(canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback()
         );
@@ -120,7 +121,7 @@ class ZoomCommandsE2ETest {
         // Arrange
         zoomLevel.set(Globals.MIN_ZOOM * Globals.ZOOM_STEP); // Set close to min
         ZoomOutCommand command = new ZoomOutCommand(
-               scrollPane, canvas,
+                canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback()
         );
@@ -139,7 +140,7 @@ class ZoomCommandsE2ETest {
         // Arrange
         zoomLevel.set(2.5); // Start at 250%
         ZoomResetCommand command = new ZoomResetCommand(
-                scrollPane, canvas,
+                canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback()
         );
@@ -163,8 +164,9 @@ class ZoomCommandsE2ETest {
         scrollPane.setPrefWidth(400);
         scrollPane.setPrefHeight(300);
         
+        javafx.geometry.BoundingBox viewportBounds = new javafx.geometry.BoundingBox(0, 0, 400, 300);
         ZoomFitToViewportCommand command = new ZoomFitToViewportCommand(
-                scrollPane, canvas,
+                viewportBounds, canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback()
         );
@@ -184,7 +186,7 @@ class ZoomCommandsE2ETest {
         // Arrange
         double targetZoom = 1.5;
         ZoomSetCommand command = new ZoomSetCommand(
-                scrollPane, canvas,
+                canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback(),
                 targetZoom
@@ -206,7 +208,7 @@ class ZoomCommandsE2ETest {
         // Arrange
         double targetZoom = Globals.MAX_ZOOM + 10.0; // Way above max
         ZoomSetCommand command = new ZoomSetCommand(
-                scrollPane, canvas,
+                canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback(),
                 targetZoom
@@ -226,7 +228,7 @@ class ZoomCommandsE2ETest {
         // Arrange
         double targetZoom = Globals.MIN_ZOOM - 0.1; // Below min
         ZoomSetCommand command = new ZoomSetCommand(
-                scrollPane, canvas,
+                canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback(),
                 targetZoom
@@ -249,7 +251,7 @@ class ZoomCommandsE2ETest {
         double targetZoom = 2.0;
         
         ZoomSetCommand command = new ZoomSetCommand(
-                scrollPane, canvas,
+                canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback(),
                 targetZoom
@@ -276,7 +278,7 @@ class ZoomCommandsE2ETest {
         // Act - Zoom in 3 times
         for (int i = 0; i < 3; i++) {
             ZoomInCommand command = new ZoomInCommand(
-                    scrollPane, canvas,
+                    canvas,
                     zoomLevel::get, zoomLevel::set,
                     createStatusBarCallback()
             );
@@ -298,14 +300,14 @@ class ZoomCommandsE2ETest {
 
         // Act - Zoom in then out
         ZoomInCommand zoomIn = new ZoomInCommand(
-                scrollPane, canvas,
+                canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback()
         );
         zoomIn.execute();
 
         ZoomOutCommand zoomOut = new ZoomOutCommand(
-                scrollPane, canvas,
+                canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback()
         );
@@ -323,19 +325,19 @@ class ZoomCommandsE2ETest {
         zoomLevel.set(1.0);
 
         // Act - Zoom in, out, in, then reset
-        new ZoomInCommand(scrollPane, canvas,
+        new ZoomInCommand(canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback()).execute();
         
-        new ZoomOutCommand(scrollPane, canvas,
+        new ZoomOutCommand(canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback()).execute();
         
-        new ZoomInCommand(scrollPane, canvas,
+        new ZoomInCommand(canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback()).execute();
 
-        new ZoomResetCommand(scrollPane, canvas,
+        new ZoomResetCommand(canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback()).execute();
 
@@ -351,7 +353,7 @@ class ZoomCommandsE2ETest {
         double targetZoom = 2.0;
 
         ZoomSetCommand command = new ZoomSetCommand(
-                scrollPane, canvas,
+                canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback(),
                 targetZoom
@@ -380,15 +382,15 @@ class ZoomCommandsE2ETest {
         zoomLevel.set(2.0);
 
         // Act
-        new ZoomInCommand(scrollPane, canvas,
+        new ZoomInCommand(canvas,
                 zoomLevel::get, zoomLevel::set,
                 () -> callback1Called.set(true)).execute();
 
-        new ZoomOutCommand(scrollPane, canvas,
+        new ZoomOutCommand(canvas,
                 zoomLevel::get, zoomLevel::set,
                 () -> callback2Called.set(true)).execute();
 
-        new ZoomResetCommand(scrollPane, canvas,
+        new ZoomResetCommand(canvas,
                 zoomLevel::get, zoomLevel::set,
                 () -> callback3Called.set(true)).execute();
 
@@ -402,20 +404,21 @@ class ZoomCommandsE2ETest {
     @DisplayName("Command descriptions should be meaningful")
     void testCommandDescriptions() {
         // Arrange & Act
-        ZoomInCommand zoomIn = new ZoomInCommand(scrollPane, canvas,
+        ZoomInCommand zoomIn = new ZoomInCommand(canvas,
                 zoomLevel::get, zoomLevel::set, createStatusBarCallback());
         
-        ZoomOutCommand zoomOut = new ZoomOutCommand(scrollPane, canvas,
+        ZoomOutCommand zoomOut = new ZoomOutCommand(canvas,
                 zoomLevel::get, zoomLevel::set, createStatusBarCallback());
         
-        ZoomResetCommand zoomReset = new ZoomResetCommand(scrollPane, canvas,
+        ZoomResetCommand zoomReset = new ZoomResetCommand(canvas,
                 zoomLevel::get, zoomLevel::set, createStatusBarCallback());
         
+        javafx.geometry.BoundingBox viewportBounds = new javafx.geometry.BoundingBox(0, 0, 400, 300);
         ZoomFitToViewportCommand zoomFit = new ZoomFitToViewportCommand(
-                scrollPane, canvas,
+                viewportBounds, canvas,
                 zoomLevel::get, zoomLevel::set, createStatusBarCallback());
         
-        ZoomSetCommand zoomSet = new ZoomSetCommand(scrollPane, canvas,
+        ZoomSetCommand zoomSet = new ZoomSetCommand(canvas,
                 zoomLevel::get, zoomLevel::set, createStatusBarCallback(),
                 1.5);
 
@@ -446,7 +449,7 @@ class ZoomCommandsE2ETest {
         statusBarUpdated.set(false);
         
         ZoomSetCommand command = new ZoomSetCommand(
-                scrollPane, canvas,
+                canvas,
                 zoomLevel::get, zoomLevel::set,
                 createStatusBarCallback(),
                 targetZoom

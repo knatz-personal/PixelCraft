@@ -116,6 +116,26 @@ public final class FileManager {
     public Optional<RasterImage> getCurrentImage() {
         return Optional.ofNullable(currentImage);
     }
+
+    /**
+     * Sets the current image directly, typically used for operations like crop
+     * that produce a new image from an existing one.
+     * <p>
+     * This method clears the current file association since the new image
+     * has not been saved to any file yet.
+     * </p>
+     *
+     * @param image the new RasterImage to set as current
+     */
+    public void setCurrentImage(RasterImage image) {
+        if (currentImage != null) {
+            currentImage.clearCache();
+        }
+        currentImage = image;
+        currentFile = null; // Clear file association - new image hasn't been saved
+        isModified = true;
+        notifyChanges();
+    }
     
     public Optional<File> getCurrentFile() {
         return Optional.ofNullable(currentFile);

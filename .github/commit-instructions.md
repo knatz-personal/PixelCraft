@@ -1,0 +1,5 @@
+- Use conventional commits: type(scope): description
+- Imperative mood; keep subject ≤ 50 chars
+- Include scope when relevant
+- Reference issues as #<number>
+- Format as markdown suitable for copying.

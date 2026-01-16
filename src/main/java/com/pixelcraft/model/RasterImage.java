@@ -8,14 +8,13 @@ import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.File;
+import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import com.pixelcraft.util.logging.Logger;
-import com.pixelcraft.util.logging.LoggerFactory;
-
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
+import javafx.scene.shape.Rectangle;
 
 /**
  * Represents a raster (bitmap) image with support for non-destructive viewing
@@ -65,7 +64,7 @@ import javafx.scene.image.Image;
  * @see javafx.embed.swing.SwingFXUtils
  */
 public final class RasterImage {
-    private static final Logger LOG = LoggerFactory.getLogger(RasterImage.class);
+    //private static final Logger LOG = LoggerFactory.getLogger(RasterImage.class);
 
     private BufferedImage originalImage;
     private BufferedImage image;
@@ -200,37 +199,19 @@ public final class RasterImage {
         
         // Determine bytes per pixel based on image type
         switch (image.getType()) {
-            case BufferedImage.TYPE_INT_ARGB:
-            case BufferedImage.TYPE_INT_ARGB_PRE:
-            case BufferedImage.TYPE_INT_RGB:
-            case BufferedImage.TYPE_INT_BGR:
-                bytesPerPixel = 4;
-                break;
-            case BufferedImage.TYPE_3BYTE_BGR:
-                bytesPerPixel = 3;
-                break;
-            case BufferedImage.TYPE_BYTE_GRAY:
-            case BufferedImage.TYPE_BYTE_BINARY:
-            case BufferedImage.TYPE_BYTE_INDEXED:
-                bytesPerPixel = 1;
-                break;
-            case BufferedImage.TYPE_USHORT_GRAY:
-            case BufferedImage.TYPE_USHORT_565_RGB:
-            case BufferedImage.TYPE_USHORT_555_RGB:
-                bytesPerPixel = 2;
-                break;
-            default:
+            case BufferedImage.TYPE_INT_ARGB, BufferedImage.TYPE_INT_ARGB_PRE, BufferedImage.TYPE_INT_RGB, BufferedImage.TYPE_INT_BGR -> bytesPerPixel = 4;
+            case BufferedImage.TYPE_3BYTE_BGR -> bytesPerPixel = 3;
+            case BufferedImage.TYPE_BYTE_GRAY, BufferedImage.TYPE_BYTE_BINARY, BufferedImage.TYPE_BYTE_INDEXED -> bytesPerPixel = 1;
+            case BufferedImage.TYPE_USHORT_GRAY, BufferedImage.TYPE_USHORT_565_RGB, BufferedImage.TYPE_USHORT_555_RGB -> bytesPerPixel = 2;
+            default -> {
                 // For custom types, use data buffer size
                 int dataTypeSize = DataBufferInt.class.isAssignableFrom(
-                    image.getRaster().getDataBuffer().getClass()) ? 4 : 1;
+                        image.getRaster().getDataBuffer().getClass()) ? 4 : 1;
                 return (long) image.getRaster().getDataBuffer().getSize() * dataTypeSize;
+            }
         }
         
         return (long) width * height * bytesPerPixel;
-    }
-
-    private void markPixelsDirty() {
-        fxImageDirty = true;
     }
 
     /**
@@ -314,38 +295,13 @@ public final class RasterImage {
                 this.image = this.originalImage;
                 this.modified = false;
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             this.originalImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
             this.image = this.originalImage;
             this.modified = false;
         }
         this.cachedFxImage = null;
         this.fxImageDirty = true;
-    }
-
-    /**
-     * Simple ARGB conversion.
-     */
-    private static BufferedImage convertToArgb(BufferedImage src) {
-        // Fast path for INT_RGB - just add alpha channel
-        if (src.getType() == BufferedImage.TYPE_INT_RGB) {
-            int w = src.getWidth();
-            int h = src.getHeight();
-            BufferedImage dest = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-            int[] srcData = ((DataBufferInt) src.getRaster().getDataBuffer()).getData();
-            int[] destData = ((DataBufferInt) dest.getRaster().getDataBuffer()).getData();
-            for (int i = 0; i < srcData.length; i++) {
-                destData[i] = srcData[i] | 0xFF000000;
-            }
-            return dest;
-        }
-        
-        // General case
-        BufferedImage dest = new BufferedImage(src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = dest.createGraphics();
-        g.drawImage(src, 0, 0, null);
-        g.dispose();
-        return dest;
     }
 
     /**
@@ -486,22 +442,6 @@ public final class RasterImage {
     }
 
     /**
-     * Ensures that the given BufferedImage is of type TYPE_INT_ARGB. If the
-     * source image is already in ARGB format, it is returned as-is. Otherwise,
-     * a deep copy of the image is created and returned in ARGB format.
-     *
-     * @param src the source BufferedImage to check and potentially convert
-     * @return the original image if already ARGB, or a deep copy converted to
-     * ARGB format
-     */
-    private static BufferedImage ensureArgb(BufferedImage src) {
-        if (src.getType() == BufferedImage.TYPE_INT_ARGB) {
-            return src;
-        }
-        return deepCopyBuffered(src);
-    }
-
-    /**
      * Copies pixels from another RasterImage to this image. The copy operation
      * is limited to the overlapping area of both images, using the minimum
      * width and height of the two images.
@@ -516,6 +456,74 @@ public final class RasterImage {
                 setPixel(x, y, other.getPixel(x, y));
             }
         }
+    }
+
+    /**
+     * Crops the image to the specified rectangular region.
+     * <p>
+     * This method extracts a rectangular portion of the current image and returns
+     * a new RasterImage containing only that region. The original image is not modified.
+     * </p>
+     * <p>
+     * The crop bounds are validated to ensure they fall within the image dimensions.
+     * If the bounds exceed the image boundaries, an IllegalArgumentException is thrown.
+     * </p>
+     *
+     * @param x the x-coordinate of the top-left corner of the crop region
+     * @param y the y-coordinate of the top-left corner of the crop region
+     * @param width the width of the crop region in pixels
+     * @param height the height of the crop region in pixels
+     * @return a new RasterImage containing the cropped region
+     * @throws IllegalArgumentException if crop bounds are invalid or exceed image dimensions
+     */
+    public RasterImage crop(int x, int y, int width, int height) {
+        // Validate parameters
+        if (width <= 0 || height <= 0) {
+            throw new IllegalArgumentException("Crop dimensions must be positive: " + width + "x" + height);
+        }
+        if (x < 0 || y < 0) {
+            throw new IllegalArgumentException("Crop coordinates cannot be negative: (" + x + ", " + y + ")");
+        }
+        if (x + width > getWidth() || y + height > getHeight()) {
+            throw new IllegalArgumentException(
+                String.format("Crop bounds (%d,%d,%d,%d) exceed image dimensions (%d,%d)",
+                    x, y, width, height, getWidth(), getHeight()));
+        }
+
+        // Create the cropped image
+        BufferedImage cropped = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = cropped.createGraphics();
+        g.setComposite(AlphaComposite.Src);
+        g.drawImage(this.image, 0, 0, width, height, x, y, x + width, y + height, null);
+        g.dispose();
+
+        // Create new RasterImage with cropped content
+        RasterImage result = new RasterImage(width, height);
+        result.originalImage = cropped;
+        result.image = cropped;
+        result.modified = true;
+        result.pixelArtMode = this.pixelArtMode;
+        result.fxImageDirty = true;
+        
+        return result;
+    }
+
+    /**
+     * Crops the image to the specified rectangle.
+     * <p>
+     * Convenience overload that accepts a {@link Rectangle}.
+     * </p>
+     *
+     * @param bounds the rectangular region to crop
+     * @return a new RasterImage containing the cropped region
+     * @throws IllegalArgumentException if bounds are null, invalid, or exceed image dimensions
+     * @see #crop(int, int, int, int)
+     */
+    public RasterImage crop(Rectangle bounds) {
+        if (bounds == null) {
+            throw new IllegalArgumentException("Crop bounds cannot be null");
+        }
+        return crop((int)bounds.getX(), (int)bounds.getY(), (int)bounds.getWidth(), (int)bounds.getHeight());
     }
 
     /**

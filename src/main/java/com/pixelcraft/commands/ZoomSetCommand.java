@@ -6,14 +6,11 @@ import java.util.function.Supplier;
 import com.pixelcraft.util.Globals;
 
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.ScrollPane;
 
-
-public class ZoomSetCommand implements ICommand {
+public class ZoomSetCommand extends CommandBase {
     // Maximum texture size for GPU rendering (safe limit for most GPUs)
     private static final double MAX_TEXTURE_SIZE = 8192.0;
 
-    private final ScrollPane scrollPane;
     private final Canvas canvas;
     private final Supplier<Double> zoomLevelGetter;
     private final Consumer<Double> zoomLevelSetter;
@@ -21,10 +18,9 @@ public class ZoomSetCommand implements ICommand {
     private final double targetZoom;
     private double previousZoom;
 
-    public ZoomSetCommand(ScrollPane scrollPane, Canvas canvas,                          
+    public ZoomSetCommand(Canvas canvas,                          
                           Supplier<Double> zoomLevelGetter, Consumer<Double> zoomLevelSetter,
                           Runnable updateStatusBar, double targetZoom) {
-        this.scrollPane = scrollPane;
         this.canvas = canvas;
         this.zoomLevelGetter = zoomLevelGetter;
         this.zoomLevelSetter = zoomLevelSetter;
@@ -63,7 +59,11 @@ public class ZoomSetCommand implements ICommand {
 
     @Override
     public void undo() {
-        new ZoomSetCommand(scrollPane, canvas, zoomLevelGetter, zoomLevelSetter, updateStatusBar, previousZoom).execute();
+        zoomLevelSetter.accept(previousZoom);
+        
+        if (updateStatusBar != null) {
+            updateStatusBar.run();
+        }
     }
 
     @Override

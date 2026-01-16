@@ -2,8 +2,7 @@ package com.pixelcraft.util;
 
 public final class Globals {
 
-    private Globals() {
-        /* Do not allow creation of instances */ }
+    private Globals() {/* Do not allow creation of instances */ }
 
     public static final double MIN_ZOOM = 0.01;
     public static final double MAX_ZOOM = 10.01;

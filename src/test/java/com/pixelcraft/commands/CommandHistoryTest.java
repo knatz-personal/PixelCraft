@@ -95,7 +95,7 @@ class CommandHistoryTest {
     }
 
     @Test
-    @DisplayName("Redo calls execute method on command")
+    @DisplayName("Redo calls redo method on command")
     void testRedoCallsCommandExecute() {
         history.execute(mockCommand);
         history.undo();
@@ -103,7 +103,7 @@ class CommandHistoryTest {
         
         history.redo();
         
-        verify(mockCommand).execute();
+        verify(mockCommand).redo();
     }
 
     @Test
@@ -171,10 +171,10 @@ class CommandHistoryTest {
         reset(cmd1, cmd2);
         
         history.redo();
-        verify(cmd1).execute();
+        verify(cmd1).redo();
         
         history.redo();
-        verify(cmd2).execute();
+        verify(cmd2).redo();
         
         assertEquals(2, history.getUndoStack().size());
         assertEquals(0, history.getRedoStack().size());

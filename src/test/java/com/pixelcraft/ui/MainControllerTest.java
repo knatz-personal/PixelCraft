@@ -65,13 +65,11 @@ class MainControllerTest {
     private static final Logger LOGGER = Logger.getLogger(MainControllerTest.class.getName());
 
     @Start
-    @SuppressWarnings("unused")
     private void start(Stage stage) {
         // TestFX will provide the stage
     }
 
     @BeforeEach
-    @SuppressWarnings("unused")
     void setUp() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
         final Exception[] setupException = new Exception[1];
@@ -86,21 +84,25 @@ class MainControllerTest {
                 scrollPane.setContent(canvasContainer);
                 
                 lblImageSize = new Label();
+                Label lblFileSize = new Label();
                 lblPosition = new Label();
                 lblMode = new Label();
                 mnuRecents = new Menu();
                 cmbZoomPresets = new ComboBox<>();
                 lstHistory = new ListView<>();
+                ListView<String> lstActivityLog = new ListView<>();
 
                 // Inject FXML fields using reflection
                 ReflectionUtil.injectField(controller, "canvasContainer", canvasContainer);
                 ReflectionUtil.injectField(controller, "scrollPane", scrollPane);
                 ReflectionUtil.injectField(controller, "lblImageSize", lblImageSize);
+                ReflectionUtil.injectField(controller, "lblFileSize", lblFileSize);
                 ReflectionUtil.injectField(controller, "lblPosition", lblPosition);
                 ReflectionUtil.injectField(controller, "lblMode", lblMode);
                 ReflectionUtil.injectField(controller, "mnuRecents", mnuRecents);
                 ReflectionUtil.injectField(controller, "cmbZoomPresets", cmbZoomPresets);
                 ReflectionUtil.injectField(controller, "lstHistory", lstHistory);
+                ReflectionUtil.injectField(controller, "lstActivityLog", lstActivityLog);
 
                 // Call initialize method
                 Method initMethod = MainController.class.getDeclaredMethod("initialize");
