@@ -74,3 +74,4 @@ replay_pid*
 config/local.properties
 *.db
 *.sqlite
+target/classes/module-info.class
